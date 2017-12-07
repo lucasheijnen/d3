@@ -92,12 +92,13 @@ void menu(bool debug, std::istream& inStr, std::ostream &out){
 		if(in.substr(0,5) == "read "){
 			if(t->create(in.substr(4,string::npos))) {
 				theAuto = createAutomaton(t);
-                                if(debug) {
-                                    theAuto.print(out);
-                                }
-                        } else if(!debug) {
+        if(debug) {
+        	theAuto.print(out);
+        }
+      } 
+			else if(!debug) {
 				out << "Error: invalid formula" <<std::endl;
-                        }
+      }
 		}
 		else if(in.substr(0,6) == "check "){
 			if(verifyAutomaton(theAuto,in.substr(5,string::npos), debug, out))

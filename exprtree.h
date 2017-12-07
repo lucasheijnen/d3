@@ -211,9 +211,6 @@ bool ExprTree::create(string expr){
 	return !isComplete();
 }
 
-
-
-
 node<expr>* ExprTree::createNode(const string data){
 	node<expr>* assist = new node<expr>;
 	expr extra;
