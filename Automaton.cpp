@@ -34,9 +34,12 @@ void Automaton::parseInput(const std::list<BitVector> input){
 	}
 }
 
-bool Automaton::inFinalState() const
-	{return true;}
-
+bool Automaton::inFinalState() const{
+	for(std::set<State>::const_iterator i = currentStates.begin(); 
+			i != currentStates.end(); ++i)
+		if(finalStates.find(*i) != finalStates.end()) return true;	
+	return false;
+}
 
 void Automaton::printStates(std::ostream &str, const std::set<State> s) {
     str << "{";
