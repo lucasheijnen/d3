@@ -15,6 +15,7 @@ void Automaton::addTransition
 
 void Automaton::markInitial(const State state){
 	initialStates.insert(state);
+	currentStates.insert(state);
 }
 
 void Automaton::markFinal(const State state){
@@ -54,22 +55,24 @@ void invCan(int num, int &num1, int &num2){
 
 void Automaton::intersect(Automaton& fa1, Automaton& fa2){
 	std::map<State, std::map<BitVector, std::set<State> > > newTransitions;
-	std::set<State> newState, newInitState, newFinitState, remain;
+	std::set<State> newStates, newInitStates, newFinitStates, remain;
 	std::map<BitVector, std::set<State> > temp1, temp2;
 	int num1, num2;
 	for(std::set<State>::iterator i = fa1.initialStates.begin(); 
 		i != fa1.initialStates.end(); ++i)
 		for(std::set<State>::iterator j = fa2.initialStates.begin();
 			j != fa2.initialStates.end(); ++j)
-			newInitState.insert(cantor(*i, *j));
-	remain = newInitState;
-	while(!remain.empty()){
-		newState.insert(*remain.begin());
+			newInitStates.insert(cantor(*i, *j));
+	remain = newInitStates;
+	while(remain.size() != 0){
+		State newState = *remain.begin();
 		remain.erase(remain.begin());
-		invCan(*newState.begin(), num1, num2);
+		newStates.insert(newState);
+		//std::cout << newState << std::endl;
+		invCan(newState, num1, num2);
 		if(fa1.finalStates.find(num1) != fa1.finalStates.end() &&
 		   fa2.finalStates.find(num2) != fa2.finalStates.end())
-			newFinitState.insert(*(--newState.end()));
+			newFinitStates.insert(newState);
 		temp1 = fa1.transitions[num1];
 		temp2 = fa2.transitions[num2];
 		for(std::map<BitVector, std::set<State> > ::iterator i = temp1.begin();
@@ -78,17 +81,48 @@ void Automaton::intersect(Automaton& fa1, Automaton& fa2){
 				j != temp2[i->first].end(); ++j){
 				for(std::set<State>::iterator k = i->second.begin();
 					k != i->second.end(); ++k){
-					if(newState.find(cantor(*k, *j)) == newState.end())
+					if(newStates.find(cantor(*k, *j)) == newStates.end()){
 						remain.insert(cantor(*k, *j));
-					newTransitions[*(--newState.end())][i->first].insert(cantor(*k, *j));
+					} 
+					newTransitions[cantor(num1, num2)][i->first].insert(cantor(*k, *j));
 				}
 			}
 		}
 	}
-	states = newState;
-	initialStates = newInitState;
-	finalStates = newFinitState;
+	states = newStates;
+	initialStates = newInitStates;
+	currentStates = initialStates;
+	finalStates = newFinitStates;
 	transitions = newTransitions;
+}
+
+void Automaton::addToAlphabet(unsigned varnr){ 
+	BitVector newbv; 
+	std::map<State, std::map<BitVector, std::set<State> > > newTransitions;
+	if(alphabet.find(varnr) == alphabet.end())
+		for(std::map<State, std::map<BitVector, std::set<State>>>::iterator i = 
+			transitions.begin(); i != transitions.end(); ++i)
+			for(std::map<BitVector, std::set<State>>::iterator j = 
+				transitions[i->first].begin(); j != transitions[i->first].end();
+				++j){
+				newbv = j->first;
+				newbv[varnr] = 0;
+				newTransitions[i->first].insert(std::pair<BitVector,
+				std::set<State>>(newbv, j->second));
+				newbv[varnr] = 1;
+				newTransitions[i->first].insert(std::pair<BitVector,
+				std::set<State>>(newbv, j->second));
+			}
+	transitions = newTransitions;
+}
+
+void Automaton::next(const BitVector input){
+	std::set<State> temp = currentStates;
+	currentStates.clear();
+	for(std::set<State>::iterator i = temp.begin(); i != temp.end(); ++i){
+		currentStates.insert(
+		transitions[*i][input].begin(), transitions[*i][input].end());
+	}
 }
 
 void Automaton::printStates(std::ostream &str, const std::set<State> s) {
@@ -109,11 +143,13 @@ void Automaton::printTransitionLabel(std::ostream &str, const BitVector t) {
 }
 
 void Automaton::print(std::ostream &str) const {
-    str << "Initial States: ";
+    str << "States: ";
+    printStates(str, states);
+    str << " Initial States: ";
     printStates(str, initialStates);
-    str << "Final States: ";
+    str << " Final States: ";
     printStates(str, finalStates);
-    str << "Current States: ";
+    str << " Current States: ";
     printStates(str, currentStates);
     str <<"\nTransitions: \n";
     
