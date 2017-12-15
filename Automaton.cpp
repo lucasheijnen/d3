@@ -143,6 +143,10 @@ void Automaton::printTransitionLabel(std::ostream &str, const BitVector t) {
 }
 
 void Automaton::print(std::ostream &str) const {
+    str << "Free variables: {";
+    for(const int var: alphabet) {
+        str << "x" << var << ", ";
+    }
     str << "States: ";
     printStates(str, states);
     str << " Initial States: ";
