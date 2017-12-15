@@ -85,41 +85,6 @@ bool verifyAutomaton(Automaton& theAuto, string formula, bool debug, std::ostrea
 
 void menu(bool debug, std::istream& inStr, std::ostream &out){
 	Automaton theAuto;
-	Automaton fa1, fa2;
-  BitVector a,b;
-  a[0] = 0;
-  b[0] = 1;
-  //fa1.addToAlphabet(0);
-  fa1.addState(1);
-  fa1.markInitial(1);
-  fa1.markFinal(1);
-  fa1.addState(2);
-  fa1.markFinal(2);
-  fa1.addState(3);
-  fa1.addTransition(1, b, 1);
-  fa1.addTransition(1, a, 2);
-  fa1.addTransition(2, b, 1);
-  fa1.addTransition(2, a, 3);
-  fa1.addTransition(3, a, 3);
-  fa1.addTransition(3, b, 3);
-	fa1.print(out);
-  //fa2.addToAlphabet(0);
-  fa2.addState(1);
-  fa2.markInitial(1);
-  fa2.addState(2);
-  fa2.addState(3);
-  fa2.markFinal(3);
-  fa2.addTransition(1, b, 1);
-  fa2.addTransition(1, a, 2);
-  fa2.addTransition(2, a, 2);
-  fa2.addTransition(2, b, 3);
-  fa2.addTransition(3, a, 2);
-  fa2.addTransition(3, b, 1);
-  fa2.print(out);
-  theAuto.intersect(fa1, fa2);
-  theAuto.print(out);
-  theAuto.addToAlphabet(2);
-  theAuto.print(out);
 	ExprTree * t = new ExprTree();
 	while(true){
 		string in;

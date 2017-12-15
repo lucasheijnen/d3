@@ -53,47 +53,47 @@ void invCan(int num, int &num1, int &num2){
 	num1 = temp1 - num2; 
 }
 
+void Automaton::clearAuto(){
+	states.clear();
+	initialStates.clear();
+	finalStates.clear();
+	transitions.clear();
+	currentStates.clear();
+	alphabet.clear();
+}
+
 void Automaton::intersect(Automaton& fa1, Automaton& fa2){
-	std::map<State, std::map<BitVector, std::set<State> > > newTransitions;
-	std::set<State> newStates, newInitStates, newFinitStates, remain;
 	std::map<BitVector, std::set<State> > temp1, temp2;
 	int num1, num2;
+	clearAuto();
+	alphabet = fa1.alphabet;
 	for(std::set<State>::iterator i = fa1.initialStates.begin(); 
 		i != fa1.initialStates.end(); ++i)
 		for(std::set<State>::iterator j = fa2.initialStates.begin();
 			j != fa2.initialStates.end(); ++j)
-			newInitStates.insert(cantor(*i, *j));
-	remain = newInitStates;
+			{addState(cantor(*i, *j)); markInitial(cantor(*i, *j));}
+	std::set<State> remain(states);
 	while(remain.size() != 0){
 		State newState = *remain.begin();
 		remain.erase(remain.begin());
-		newStates.insert(newState);
-		//std::cout << newState << std::endl;
+		addState(newState);
 		invCan(newState, num1, num2);
 		if(fa1.finalStates.find(num1) != fa1.finalStates.end() &&
 		   fa2.finalStates.find(num2) != fa2.finalStates.end())
-			newFinitStates.insert(newState);
+			markFinal(newState);
 		temp1 = fa1.transitions[num1];
 		temp2 = fa2.transitions[num2];
 		for(std::map<BitVector, std::set<State> > ::iterator i = temp1.begin();
-			i != temp1.end(); ++i){
+			i != temp1.end(); ++i)
 			for(std::set<State>::iterator j = temp2[i->first].begin(); 
-				j != temp2[i->first].end(); ++j){
+				j != temp2[i->first].end(); ++j)
 				for(std::set<State>::iterator k = i->second.begin();
 					k != i->second.end(); ++k){
-					if(newStates.find(cantor(*k, *j)) == newStates.end()){
+					if(states.find(cantor(*k, *j)) == states.end()) 
 						remain.insert(cantor(*k, *j));
-					} 
-					newTransitions[cantor(num1, num2)][i->first].insert(cantor(*k, *j));
+					addTransition(cantor(num1, num2), i->first, cantor(*k, *j));
 				}
-			}
-		}
 	}
-	states = newStates;
-	initialStates = newInitStates;
-	currentStates = initialStates;
-	finalStates = newFinitStates;
-	transitions = newTransitions;
 }
 
 void Automaton::addToAlphabet(unsigned varnr){ 

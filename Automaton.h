@@ -13,6 +13,7 @@ typedef int State;
 
 class Automaton {
 	public:
+		void clearAuto();
 		/**
       * Add the given state (an integer) to the automaton
      */
