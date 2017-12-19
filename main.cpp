@@ -1,23 +1,46 @@
 #include <iostream>
-#include "exprtree.h"
 #include "Automaton.h"
+#include "exprtree.h"
 
-/*TODO
-	hoorcollege doornemen
-	WERKCOLLEGE vraag exists met AND kind??
-				hoe de heck?? kan je 1=1 invoeren (Ja data kan)
-	nadenken over presburger gekheid...
-*/
+Automaton automair(node<expr>* root){
+	Automaton theAuto;
+	ExprTree * tree = new ExprTree();
+	tree->createFromNode(root);
+	int b = 0, temp;	
+	std::map<unsigned,int> pres;
+	std::set<BitVector> bvset;
+	BitVector bv;
+	tree->getPresburgerMap(pres, b);
+	theAuto.addState(b);
+	theAuto.markInitial(b);
+	//shit1ALLEBITVECTOREN GENERENREN
+	for(int i = 0; i != pow(2, pres.size()); ++i){
+		temp = i;
+		for(std::map<unsigned,int>::iterator j = pres.begin(); j != pres.end();
+			++j){
+			bv[j->first] = temp&1;
+			temp >>= 1;
+		}
+		bvset.insert(bv);
+	}
+	//shit2CONTROELJFE
+	//shit3TRANSITITEJOITEN oftewel c
+	theAuto.markFinal(0);
+	return theAuto;
+}
 Automaton createAutomaton(ExprTree * exptree){
     Automaton theAuto;
     switch(exptree->getRoot()->getData().type) {
     	case expr::AND: 
     	case expr::NOT: break;
     	case expr::EXISTS: 
-    		if(exptree->getRoot()->getRight()->getData().type == expr::EQUALS){}
+    		if(exptree->getRoot()->getRight()->getData().type == expr::EQUALS) {}
+					//theAuto = automair(exptree->getRoot()->getRight());
     		else if(exptree->getRoot()->getRight()->getData().type == expr::AND){}
 			else if(exptree->getRoot()->getRight()->getData().type == expr::NOT){} 		
     		break;
+			case expr::EQUALS: theAuto = automair(exptree->getRoot());
+				break;
     	default: break;
     }
     // TODO (voor studenten in deel 2): Bouw de Presburger automaat door de meegegeven syntaxtree exptree van de formule te doorlopen
