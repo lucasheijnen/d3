@@ -176,5 +176,11 @@ void Automaton::print(std::ostream &str) const {
     }
 }
 
+bool Automaton::stateInstates(State state){
+	if(states.find(state) == states.end()) return false;
+	return true;
+}
 
-
+void Automaton::addVar(unsigned x){
+	alphabet.insert(x);
+}

@@ -2,6 +2,44 @@
 #include "Automaton.h"
 #include "exprtree.h"
 
+void setFromState(std::set<BitVector> &bvset, std::map<unsigned,int> pres, 
+									int b){    //shit2CONTROELJFE
+	std::set<BitVector>::iterator k;
+	std::set<BitVector> tempset;
+	int temp;
+	BitVector bv;
+	for(std::set<BitVector>::iterator i = bvset.begin(); i != bvset.end(); ++i){
+		temp = 0;
+		bv = *i;
+		for(std::map<unsigned,int>::iterator j = pres.begin(); j != pres.end();
+				++j) temp += bv[j->first] * j->second; 
+		if((temp - b) % 2 == 0) 
+			tempset.insert(bv);
+	}
+	bvset = tempset;
+}
+
+void build(std::set<BitVector> bvset, std::map<unsigned,int> pres, int b,
+								Automaton &theAuto){
+	std::set<BitVector> tempset = bvset;
+	setFromState(tempset, pres, b); //shit2
+	int temp;
+	BitVector bv;
+	for(std::set<BitVector>::iterator i = tempset.begin(); i != tempset.end(); ++i){
+		temp = b;
+		bv = *i;
+		for(std::map<unsigned,int>::iterator j = pres.begin(); j != pres.end();
+				++j) temp -= bv[j->first] * j->second;
+			temp = temp/2;
+			theAuto.addTransition(b, bv, temp);
+			if(!theAuto.stateInstates(temp)){
+				theAuto.addState(temp);
+				build(bvset, pres, temp, theAuto);
+			}
+			else theAuto.addState(temp);
+	}
+
+}
 Automaton automair(node<expr>* root){
 	Automaton theAuto;
 	ExprTree * tree = new ExprTree();
@@ -13,6 +51,8 @@ Automaton automair(node<expr>* root){
 	tree->getPresburgerMap(pres, b);
 	theAuto.addState(b);
 	theAuto.markInitial(b);
+	for(std::map<unsigned,int>::iterator i = pres.begin(); i != pres.end(); ++i)
+		theAuto.addVar(i->first);
 	//shit1ALLEBITVECTOREN GENERENREN
 	for(int i = 0; i != pow(2, pres.size()); ++i){
 		temp = i;
@@ -23,11 +63,12 @@ Automaton automair(node<expr>* root){
 		}
 		bvset.insert(bv);
 	}
-	//shit2CONTROELJFE
 	//shit3TRANSITITEJOITEN oftewel c
+	build(bvset, pres, b, theAuto);
 	theAuto.markFinal(0);
 	return theAuto;
 }
+
 Automaton createAutomaton(ExprTree * exptree){
     Automaton theAuto;
     switch(exptree->getRoot()->getData().type) {
@@ -129,9 +170,9 @@ void menu(bool debug, std::istream& inStr, std::ostream &out){
 		if(in.substr(0,5) == "read "){
 			if(t->create(in.substr(4,string::npos))) {
 				theAuto = createAutomaton(t);
-        if(debug) {
+     //   if(debug) {
         	theAuto.print(out);
-        }
+      //  }
     	} else if(!debug) {
 			out << "Error: invalid formula" <<std::endl;
    		}

@@ -86,7 +86,8 @@ class Automaton {
      * Prints the current automaton to the specified stream
    */
 		void print(std::ostream &str) const;
-
+		bool stateInstates(State state);
+		void addVar(unsigned x);
 	private:
 		/**
       * Read a single BitVector as input and move from the set of current states to the set of next states
