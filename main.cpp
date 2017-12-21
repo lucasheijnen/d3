@@ -2,86 +2,86 @@
 #include "Automaton.h"
 #include "exprtree.h"
 
-void setFromState(std::set<BitVector> &bvset, std::map<unsigned,int> pres, 
-									int b){    //shit2CONTROELJFE
-	std::set<BitVector>::iterator k;
+std::set<BitVector> solveFromState(std::set<BitVector> bvset, 
+					std::map<unsigned,int> pres, int b){ 
 	std::set<BitVector> tempset;
 	int temp;
-	BitVector bv;
-	for(std::set<BitVector>::iterator i = bvset.begin(); i != bvset.end(); ++i){
+	for(auto i : bvset){
 		temp = 0;
-		bv = *i;
-		for(std::map<unsigned,int>::iterator j = pres.begin(); j != pres.end();
-				++j) temp += bv[j->first] * j->second; 
-		if((temp - b) % 2 == 0) 
-			tempset.insert(bv);
+		for(auto j : pres) temp += i.find(j.first)->second * j.second; 
+		if((temp - b) % 2 == 0) tempset.insert(i);
 	}
-	bvset = tempset;
+	return tempset;
 }
 
-void build(std::set<BitVector> bvset, std::map<unsigned,int> pres, int b,
-								Automaton &theAuto){
-	std::set<BitVector> tempset = bvset;
-	setFromState(tempset, pres, b); //shit2
-	int temp;
+Automaton build(std::set<BitVector> bvset, std::map<unsigned,int> pres, int b,
+								Automaton theAuto){
+	std::set<BitVector> tempset = solveFromState(bvset, pres, b);
 	BitVector bv;
-	for(std::set<BitVector>::iterator i = tempset.begin(); i != tempset.end(); ++i){
+	int temp;
+	for(auto i : tempset){
 		temp = b;
-		bv = *i;
-		for(std::map<unsigned,int>::iterator j = pres.begin(); j != pres.end();
-				++j) temp -= bv[j->first] * j->second;
-			temp = temp/2;
-			theAuto.addTransition(b, bv, temp);
-			if(!theAuto.stateInstates(temp)){
-				theAuto.addState(temp);
-				build(bvset, pres, temp, theAuto);
-			}
-			else theAuto.addState(temp);
+		bv = i;
+		for(auto j : pres) temp -= bv[j.first] * j.second;
+		temp = temp/2;
+		theAuto.addTransition(b, bv, temp);
+		if(!theAuto.stateInstates(temp)){
+			theAuto.addState(temp);
+			theAuto = build(bvset, pres, temp, theAuto);
+		}
+		else theAuto.addState(temp);
 	}
-
+	return theAuto;
 }
+
 Automaton automair(node<expr>* root){
 	Automaton theAuto;
 	ExprTree * tree = new ExprTree();
-	tree->createFromNode(root);
-	int b = 0, temp;	
 	std::map<unsigned,int> pres;
 	std::set<BitVector> bvset;
 	BitVector bv;
+	int b = 0, temp;	
+	tree->createFromNode(root);
 	tree->getPresburgerMap(pres, b);
 	theAuto.addState(b);
 	theAuto.markInitial(b);
-	for(std::map<unsigned,int>::iterator i = pres.begin(); i != pres.end(); ++i)
-		theAuto.addVar(i->first);
-	//shit1ALLEBITVECTOREN GENERENREN
+	for(auto i : pres) theAuto.addVar(i.first);
 	for(int i = 0; i != pow(2, pres.size()); ++i){
 		temp = i;
-		for(std::map<unsigned,int>::iterator j = pres.begin(); j != pres.end();
-			++j){
-			bv[j->first] = temp&1;
+		for(auto j : pres){
+			bv[j.first] = temp&1;
 			temp >>= 1;
 		}
 		bvset.insert(bv);
 	}
-	//shit3TRANSITITEJOITEN oftewel c
-	build(bvset, pres, b, theAuto);
+	theAuto = build(bvset, pres, b, theAuto);
 	theAuto.markFinal(0);
 	return theAuto;
+}
+
+Automaton createAutomaton(ExprTree * exptree);
+
+Automaton conjunction(ExprTree * exptree){ //NOG TESTEN!!!!
+	Automaton theAuto, theAuto1, theAuto2;
+	ExprTree * exptree1 = new ExprTree();
+	ExprTree * exptree2 = new ExprTree();
+	exptree1->createFromNode(exptree->getRoot()->getLeft());
+	exptree2->createFromNode(exptree->getRoot()->getRight());
+	theAuto1 = createAutomaton(exptree1);
+	theAuto2 = createAutomaton(exptree2);
+	theAuto1.insertFreeVars(theAuto2);
+	theAuto2.insertFreeVars(theAuto1);
+	theAuto.intersect(theAuto1, theAuto2);
+	return theAuto; 
 }
 
 Automaton createAutomaton(ExprTree * exptree){
     Automaton theAuto;
     switch(exptree->getRoot()->getData().type) {
-    	case expr::AND: 
-    	case expr::NOT: break;
-    	case expr::EXISTS: 
-    		if(exptree->getRoot()->getRight()->getData().type == expr::EQUALS) {}
-					//theAuto = automair(exptree->getRoot()->getRight());
-    		else if(exptree->getRoot()->getRight()->getData().type == expr::AND){}
-			else if(exptree->getRoot()->getRight()->getData().type == expr::NOT){} 		
-    		break;
-			case expr::EQUALS: theAuto = automair(exptree->getRoot());
-				break;
+    	case expr::NOT: 
+    	case expr::EXISTS: break;
+			case expr::AND: theAuto = conjunction(exptree); break;
+			case expr::EQUALS: theAuto = automair(exptree->getRoot()); break;
     	default: break;
     }
     // TODO (voor studenten in deel 2): Bouw de Presburger automaat door de meegegeven syntaxtree exptree van de formule te doorlopen

@@ -1,7 +1,5 @@
 #include "Automaton.h"
 
-
-
 // TODO (voor studenten - deel 1): VOEG HIER DE IMPLEMENTATIES VAN DE OPERATIES IN Automaton.h TOE
 
 void Automaton::addState(const State state){
@@ -19,25 +17,18 @@ void Automaton::markInitial(const State state){
 }
 
 void Automaton::markFinal(const State state){
-	finalStates.insert(state);
+	if(states.find(state) != states.end()) finalStates.insert(state);
 }
 
 void Automaton::parseInput(const std::list<BitVector> input){
 	std::set<State> temp;
-	for(std::list<BitVector>::const_iterator l = input.begin(); 
-		l != input.end(); ++l){
-		for(std::set<State>::iterator i = currentStates.begin(); 
-			i != currentStates.end(); ++i)
-			temp.insert(transitions[*i][*l].begin(), transitions[*i][*l].end());
-		currentStates = temp;
-		temp.clear();
-	}
+	currentStates = initialStates;
+	for(auto i : input)	next(i);
 }
 
 bool Automaton::inFinalState() const{
-	for(std::set<State>::const_iterator i = currentStates.begin(); 
-			i != currentStates.end(); ++i)
-		if(finalStates.find(*i) != finalStates.end()) return true;	
+	for(auto const i : currentStates)
+		if(finalStates.find(i) != finalStates.end()) return true;	
 	return false;
 }
 
@@ -67,11 +58,9 @@ void Automaton::intersect(Automaton& fa1, Automaton& fa2){
 	int num1, num2;
 	clearAuto();
 	alphabet = fa1.alphabet;
-	for(std::set<State>::iterator i = fa1.initialStates.begin(); 
-		i != fa1.initialStates.end(); ++i)
-		for(std::set<State>::iterator j = fa2.initialStates.begin();
-			j != fa2.initialStates.end(); ++j)
-			{addState(cantor(*i, *j)); markInitial(cantor(*i, *j));}
+	for(auto i : fa1.initialStates)
+		for(auto j : fa2.initialStates)
+			{addState(cantor(i, j)); markInitial(cantor(i, j));}
 	std::set<State> remain(states);
 	while(remain.size() != 0){
 		State newState = *remain.begin();
@@ -83,15 +72,12 @@ void Automaton::intersect(Automaton& fa1, Automaton& fa2){
 			markFinal(newState);
 		temp1 = fa1.transitions[num1];
 		temp2 = fa2.transitions[num2];
-		for(std::map<BitVector, std::set<State> > ::iterator i = temp1.begin();
-			i != temp1.end(); ++i)
-			for(std::set<State>::iterator j = temp2[i->first].begin(); 
-				j != temp2[i->first].end(); ++j)
-				for(std::set<State>::iterator k = i->second.begin();
-					k != i->second.end(); ++k){
-					if(states.find(cantor(*k, *j)) == states.end()) 
-						remain.insert(cantor(*k, *j));
-					addTransition(cantor(num1, num2), i->first, cantor(*k, *j));
+		for(auto i : temp1)
+			for(auto j : temp2[i.first])
+				for(auto k : i.second){
+					if(states.find(cantor(k, j)) == states.end()) 
+						remain.insert(cantor(k, j));
+					addTransition(cantor(num1, num2), i.first, cantor(k, j));
 				}
 	}
 }
@@ -100,18 +86,15 @@ void Automaton::addToAlphabet(unsigned varnr){
 	BitVector newbv; 
 	std::map<State, std::map<BitVector, std::set<State> > > newTransitions;
 	if(alphabet.find(varnr) == alphabet.end())
-		for(std::map<State, std::map<BitVector, std::set<State>>>::iterator i = 
-			transitions.begin(); i != transitions.end(); ++i)
-			for(std::map<BitVector, std::set<State>>::iterator j = 
-				transitions[i->first].begin(); j != transitions[i->first].end();
-				++j){
-				newbv = j->first;
+		for(auto i : transitions)
+			for(auto j : transitions[i.first]){
+				newbv = j.first;
 				newbv[varnr] = 0;
-				newTransitions[i->first].insert(std::pair<BitVector,
-				std::set<State>>(newbv, j->second));
+				newTransitions[i.first].insert(std::pair<BitVector,
+				std::set<State>>(newbv, j.second));
 				newbv[varnr] = 1;
-				newTransitions[i->first].insert(std::pair<BitVector,
-				std::set<State>>(newbv, j->second));
+				newTransitions[i.first].insert(std::pair<BitVector,
+				std::set<State>>(newbv, j.second));
 			}
 	transitions = newTransitions;
 }
@@ -119,10 +102,9 @@ void Automaton::addToAlphabet(unsigned varnr){
 void Automaton::next(const BitVector input){
 	std::set<State> temp = currentStates;
 	currentStates.clear();
-	for(std::set<State>::iterator i = temp.begin(); i != temp.end(); ++i){
+	for(auto i : temp)
 		currentStates.insert(
-		transitions[*i][input].begin(), transitions[*i][input].end());
-	}
+		transitions[i][input].begin(), transitions[i][input].end());
 }
 
 void Automaton::printStates(std::ostream &str, const std::set<State> s) {
@@ -183,4 +165,9 @@ bool Automaton::stateInstates(State state){
 
 void Automaton::addVar(unsigned x){
 	alphabet.insert(x);
+}
+
+void Automaton::insertFreeVars(Automaton fa2){
+	for(auto i : fa2.alphabet)
+		if(alphabet.find(i) == alphabet.end()) addToAlphabet(i);
 }
