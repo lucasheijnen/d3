@@ -18,7 +18,7 @@ void Automaton::markInitial(const State state){
 
 void Automaton::markFinal(const State state){
 	if(states.find(state) != states.end() &&
-			finalStates.find(state) != finalStates.end()) finalStates.insert(state);
+			finalStates.find(state) == finalStates.end()) finalStates.insert(state);
 }
 
 void Automaton::parseInput(const std::list<BitVector> input){
