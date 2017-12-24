@@ -75,7 +75,7 @@ class Automaton {
       * Remove the variable with the given index from all transitions of this automaton
     */
 		void project(const unsigned variable);
-                
+
 		/**
       * OPTIONEEL (voor bonus)!!!
       * Make automata fa deterministic, eliminate epsilon transitions, and store the result in the current automaton
@@ -94,33 +94,33 @@ class Automaton {
       * Read a single BitVector as input and move from the set of current states to the set of next states
     */
 		void next(const BitVector input);
-                
+
 		/**
       * OPTIONEEL (voor bonus)!!!
       * Eliminate epsilon transitions, and store the result in the current automaton
     */
     void eliminateLambda(Automaton& fa);
-                
+
     /**
       * Prints the set of states s to the specified stream
       */
  		static void printStates(std::ostream &str, const std::set<State> s);
-                
+
     /**
       * Prints the BitVector t to the specified stream
     */
     static void printTransitionLabel(std::ostream &str, const BitVector t);
-                
-                
+
+
     // the set of all states
 		std::set<State> states;
-                
+
     // the set of initial states
 		std::set<State> initialStates;
-                
+
     // the set of final states
 		std::set<State> finalStates;
-                
+
     // the map containing all transitions of the automton
 		std::map<State, std::map<BitVector, std::set<State> > > transitions;
 

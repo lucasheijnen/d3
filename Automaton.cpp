@@ -164,6 +164,40 @@ void Automaton::print(std::ostream &str) const {
     }
 }
 
+void Automaton::eliminateLambda(Automaton& fa) {
+	State temp;
+	Automaton aut = fa;
+	clearAuto();
+	std::set<State> done;//staten die behandeld zijn en al in temp verwerkt zijn
+	bool init, fin = false;
+		for(auto i: aut.transitions) {
+			if(done.find(i.first) == done.end()) {//al gemerged, niet afhandelen
+				temp = i.first; done.insert(i.first);
+				if(aut.initialStates.find(temp) != aut.initialStates.end()) init = true;
+				if(aut.finalStates.find(temp) != aut.finalStates.end()) fin = true;
+				for(auto j : i.second) {//ga door maps
+					for(auto k : j.second) {//ga door set ints
+						if(done.find(k) == done.end()) {//is k al verwerkt in een state?
+							temp = cantor(temp, k);//alles mergen waar je heen kan met lamda
+							done.insert(k);
+							if(aut.initialStates.find(temp) != aut.initialStates.end()) init = true;
+							if(aut.finalStates.find(temp) != aut.finalStates.end()) fin = true;
+						}
+					}
+				}
+				addState(temp);
+				if(init) markInitial(temp);//deel van temp was init, dus geheel ook
+				if(fin) markFinal(temp);
+				init = fin = false;
+			}
+		}
+}
+
+void Automaton::makeDeterministic(Automaton& fa) {
+	//elke trans is lambda of geen
+	if(fa.alphabet.size() == 0) //geen free vars = lambda transities
+		fa.eliminateLambda(fa);
+}
 bool Automaton::stateInstates(State state){
 	if(states.find(state) == states.end()) return false;
 	return true;

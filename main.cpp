@@ -44,7 +44,7 @@ Automaton automair(node<expr>* root){
 	tree->createFromNode(root);
 	tree->getPresburgerMap(pres, b);
 	std::cerr << b << std::endl;
-	if(b<0) {
+	if(b<0) { //cantor werkt niet met negatieve getallen
 	 	b*=-1;
 		for(auto i : pres)i.second*=-1;
 	}
@@ -175,6 +175,7 @@ void menu(bool debug, std::istream& inStr, std::ostream &out){
 		if(in.substr(0,5) == "read "){
 			if(t->create(in.substr(4,string::npos))) {
 				theAuto = createAutomaton(t);
+				theAuto.makeDeterministic(theAuto);
      //   if(debug) {
         	theAuto.print(out);
       //  }
