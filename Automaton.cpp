@@ -89,7 +89,7 @@ void Automaton::intersect(Automaton& fa1, Automaton& fa2){
 void Automaton::addToAlphabet(unsigned varnr){
 	BitVector newbv;
 	std::map<State, std::map<BitVector, std::set<State> > > newTransitions;
-	if(alphabet.find(varnr) == alphabet.end())
+	if(alphabet.find(varnr) == alphabet.end()){
 		for(auto i : transitions)
 			for(auto j : transitions[i.first]){
 				newbv = j.first;
@@ -100,7 +100,9 @@ void Automaton::addToAlphabet(unsigned varnr){
 				newTransitions[i.first].insert(std::pair<BitVector,
 				std::set<State>>(newbv, j.second));
 			}
-	transitions = newTransitions;
+		alphabet.insert(varnr);
+		transitions = newTransitions;
+	}
 }
 
 void Automaton::next(const BitVector input){
