@@ -2,13 +2,13 @@
 #include "Automaton.h"
 #include "exprtree.h"
 
-std::set<BitVector> solveFromState(std::set<BitVector> bvset, 
-					std::map<unsigned,int> pres, int b){ 
+std::set<BitVector> solveFromState(std::set<BitVector> bvset,
+					std::map<unsigned,int> pres, int b){
 	std::set<BitVector> tempset;
 	int temp;
 	for(auto i : bvset){
 		temp = 0;
-		for(auto j : pres) temp += i.find(j.first)->second * j.second; 
+		for(auto j : pres) temp += i.find(j.first)->second * j.second;
 		if((temp - b) % 2 == 0) tempset.insert(i);
 	}
 	return tempset;
@@ -40,9 +40,14 @@ Automaton automair(node<expr>* root){
 	std::map<unsigned,int> pres;
 	std::set<BitVector> bvset;
 	BitVector bv;
-	int b = 0, temp;	
+	int b = 0, temp;
 	tree->createFromNode(root);
 	tree->getPresburgerMap(pres, b);
+	std::cerr << b << std::endl;
+	if(b<0) {
+	 	b*=-1;
+		for(auto i : pres)i.second*=-1;
+	}
 	theAuto.addState(b);
 	theAuto.markInitial(b);
 	for(auto i : pres) theAuto.addVar(i.first);
@@ -72,13 +77,13 @@ Automaton conjunction(ExprTree * exptree){ //NOG TESTEN!!!!
 	theAuto1.insertFreeVars(theAuto2);
 	theAuto2.insertFreeVars(theAuto1);
 	theAuto.intersect(theAuto1, theAuto2);
-	return theAuto; 
+	return theAuto;
 }
 
 Automaton createAutomaton(ExprTree * exptree){
     Automaton theAuto;
     switch(exptree->getRoot()->getData().type) {
-    	case expr::NOT: 
+    	case expr::NOT:
     	case expr::EXISTS: break;
 			case expr::AND: theAuto = conjunction(exptree); break;
 			case expr::EQUALS: theAuto = automair(exptree->getRoot()); break;
@@ -94,15 +99,15 @@ void addVarToBitVectors(std::list<BitVector> &l, const unsigned index, int val) 
         (*it)[index] = bit;
         val>>=1;
     }
-     
-    // create BitVector in which all variables have a bit value of 0 
+
+    // create BitVector in which all variables have a bit value of 0
     BitVector zeroVector;
     if(l.size() > 0)
         zeroVector = *(l.begin());
     for(BitVector::iterator it = zeroVector.begin(); it != zeroVector.end(); ++it) {
             it->second = 0;
     }
-   
+
     // val requires more bits than l.size(): add new vectors at the end of l
     while(val || l.size() == 0) {
         BitVector b = zeroVector;
@@ -112,7 +117,7 @@ void addVarToBitVectors(std::list<BitVector> &l, const unsigned index, int val) 
         val>>=1;
     }
 }
- 
+
 /** Utility function for BitVectors. Prints the content all BitVectors in the list to the given output stream
 */
 void printBitVectors(std::ostream &out, std::list<BitVector> l) {
@@ -124,7 +129,7 @@ void printBitVectors(std::ostream &out, std::list<BitVector> l) {
         out << "]\n";
     }
 }
- 
+
 std::list<BitVector> generateBitVectors(std::map<unsigned,unsigned> valueMap){
     std::list<BitVector> l;
     for(auto &var : valueMap){
