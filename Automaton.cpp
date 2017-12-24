@@ -9,7 +9,7 @@ void Automaton::addState(const State state){
 void Automaton::addTransition
 	(const State from, const BitVector label, const State to){
 	transitions[from][label].insert(to);
-} 
+}
 
 void Automaton::markInitial(const State state){
 	initialStates.insert(state);
@@ -17,7 +17,8 @@ void Automaton::markInitial(const State state){
 }
 
 void Automaton::markFinal(const State state){
-	if(states.find(state) != states.end()) finalStates.insert(state);
+	if(states.find(state) != states.end() &&
+			finalStates.find(state) != finalStates.end()) finalStates.insert(state);
 }
 
 void Automaton::parseInput(const std::list<BitVector> input){
@@ -26,9 +27,12 @@ void Automaton::parseInput(const std::list<BitVector> input){
 	for(auto i : input)	next(i);
 }
 
+//read & = x1 x3 & = - x2 4 x1 = x2 x3 NIE
+//read & = x1 x2 & = - x2 4 x1 = x2 x3 WEL
+
 bool Automaton::inFinalState() const{
 	for(auto const i : currentStates)
-		if(finalStates.find(i) != finalStates.end()) return true;	
+		if(finalStates.find(i) != finalStates.end()) return true;
 	return false;
 }
 
@@ -37,11 +41,11 @@ int cantor(int num1, int num2){
 }
 
 void invCan(int num, int &num1, int &num2){
-	double temp1, temp2; 
-	temp1 = floor((pow(8*num+1,.5)-1)/2); 
-	temp2 = (pow(temp1, 2) +  temp1) /2; 
-	num2 = num - temp2; 
-	num1 = temp1 - num2; 
+	double temp1, temp2;
+	temp1 = floor((pow(8*num+1,.5)-1)/2);
+	temp2 = (pow(temp1, 2) +  temp1) /2;
+	num2 = num - temp2;
+	num1 = temp1 - num2;
 }
 
 void Automaton::clearAuto(){
@@ -75,15 +79,15 @@ void Automaton::intersect(Automaton& fa1, Automaton& fa2){
 		for(auto i : temp1)
 			for(auto j : temp2[i.first])
 				for(auto k : i.second){
-					if(states.find(cantor(k, j)) == states.end()) 
+					if(states.find(cantor(k, j)) == states.end())
 						remain.insert(cantor(k, j));
-					addTransition(cantor(num1, num2), i.first, cantor(k, j));
+					addTransition(newState, i.first, cantor(k, j));
 				}
 	}
 }
 
-void Automaton::addToAlphabet(unsigned varnr){ 
-	BitVector newbv; 
+void Automaton::addToAlphabet(unsigned varnr){
+	BitVector newbv;
 	std::map<State, std::map<BitVector, std::set<State> > > newTransitions;
 	if(alphabet.find(varnr) == alphabet.end())
 		for(auto i : transitions)
@@ -113,7 +117,7 @@ void Automaton::printStates(std::ostream &str, const std::set<State> s) {
         str << st << ", ";
     }
     str << "}";
-    
+
 }
 
 void Automaton::printTransitionLabel(std::ostream &str, const BitVector t) {
@@ -138,19 +142,19 @@ void Automaton::print(std::ostream &str) const {
     str << " Current States: ";
     printStates(str, currentStates);
     str <<"\nTransitions: \n";
-    
+
     for (auto& trans : transitions) {
         for(auto& m : trans.second) {
             str << "(";
-            
+
             // print label of source state
             str << trans.first;
             str << ", ";
-            
+
             // print label of transition
             printTransitionLabel(str, m.first);
             str << ", ";
-            
+
             // print target states
             printStates(str, m.second);
             str << ")\n";
