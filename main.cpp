@@ -80,13 +80,21 @@ Automaton conjunction(ExprTree * exptree){ //NOG TESTEN!!!!
 	return theAuto;
 }
 
+Automaton quantification(ExprTree * exptree){
+	ExprTree * temptree = new ExprTree();
+	temptree->createFromNode(exptree->getRoot()->getRight());
+	Automaton theAuto = createAutomaton(temptree);
+	theAuto.quant(exptree->getRoot()->getLeft()->getData().variable);
+	return theAuto;
+}
+
 Automaton createAutomaton(ExprTree * exptree){
     Automaton theAuto;
     switch(exptree->getRoot()->getData().type) {
-    	case expr::NOT:
-    	case expr::EXISTS: break;
-			case expr::AND: theAuto = conjunction(exptree); break;
-			case expr::EQUALS: theAuto = automair(exptree->getRoot()); break;
+    	case expr::NOT: break;
+    	case expr::EXISTS: theAuto = quantification(exptree); break;
+		case expr::AND: theAuto = conjunction(exptree); break;
+		case expr::EQUALS: theAuto = automair(exptree->getRoot()); break;
     	default: break;
     }
     // TODO (voor studenten in deel 2): Bouw de Presburger automaat door de meegegeven syntaxtree exptree van de formule te doorlopen

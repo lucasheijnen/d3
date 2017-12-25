@@ -89,6 +89,7 @@ class Automaton {
 		bool stateInstates(State state);
 		void addVar(unsigned x);
 		void insertFreeVars(Automaton fa2);
+		void quant(unsigned var);
 	private:
 		/**
       * Read a single BitVector as input and move from the set of current states to the set of next states

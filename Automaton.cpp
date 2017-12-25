@@ -198,6 +198,26 @@ void Automaton::makeDeterministic(Automaton& fa) {
 	if(fa.alphabet.size() == 0) //geen free vars = lambda transities
 		fa.eliminateLambda(fa);
 }
+
+void Automaton::quant(unsigned var){
+	BitVector bv;
+	std::map<BitVector, std::set<State>> tempmap;
+	std::map<State, std::map<BitVector, std::set<State>>> newTransitions;
+	for (auto i : transitions){
+		for(auto j : i.second){
+			bv = j.first;
+			bv.erase(var);
+			tempmap.insert(std::pair<BitVector, std::set<State>>
+				(bv, transitions[i.first][j.first]));	
+		}
+		newTransitions.insert(std::pair<State, 
+			std::map<BitVector, std::set<State>>>(i.first, tempmap));
+		tempmap.clear(); ;
+	}
+	alphabet.erase(var);
+	transitions = newTransitions;
+}
+
 bool Automaton::stateInstates(State state){
 	if(states.find(state) == states.end()) return false;
 	return true;
