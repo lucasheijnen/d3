@@ -27,9 +27,6 @@ void Automaton::parseInput(const std::list<BitVector> input){
 	for(auto i : input)	next(i);
 }
 
-//read & = x1 x3 & = - x2 4 x1 = x2 x3 NIE
-//read & = x1 x2 & = - x2 4 x1 = x2 x3 WEL
-
 bool Automaton::inFinalState() const{
 	for(auto const i : currentStates)
 		if(finalStates.find(i) != finalStates.end()) return true;

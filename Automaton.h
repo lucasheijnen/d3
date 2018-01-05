@@ -86,9 +86,43 @@ class Automaton {
      * Prints the current automaton to the specified stream
    */
 		void print(std::ostream &str) const;
+		
+		/**
+			* stateInstates (PART II)
+		  * Returns true when given state is in the set of states of the automaton
+			* Param: state: State to check
+		**/
 		bool stateInstates(State state);
+		
+		/**
+			* addVar (PART II)
+		  * Inserts given unsigned to the alphabet of the automaton
+			* param: x: unsigned that should be added to the alphabet
+			* pre: automaton
+			* post: automaton whose alphabet contains the given unsigned
+		**/
 		void addVar(unsigned x);
+		
+		/**
+			* insertFreeVars (PART II)
+		  * Inserts the unsigneds to the alphabet that are in the alphabet of the
+		  given automaton and not in the alphabet of the automaton itself
+			* param: fa2: Automaton that has an alphabet
+			* pre: automaton
+			* post: automaton containing all unsigneds in the alphabet of fa2
+		**/
 		void insertFreeVars(Automaton fa2);
+		
+		/**
+			* quant (PART II)
+			* Deletes given unsigned from every transition and the alphabet from the 
+			automaton.
+			* param: var: unsigned that should be deleted from the alphabet and every 
+				transition 
+			* pre: automaton
+			* post: automaton whose alphabet does not contain var and whose
+				transitions do not contain var 
+		**/
 		void quant(unsigned var);
 	private:
 		/**

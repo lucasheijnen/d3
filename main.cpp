@@ -2,6 +2,7 @@
 #include "Automaton.h"
 #include "exprtree.h"
 
+//part II
 std::set<BitVector> solveFromState(std::set<BitVector> bvset,
 					std::map<unsigned,int> pres, int b){
 	std::set<BitVector> tempset;
@@ -14,6 +15,7 @@ std::set<BitVector> solveFromState(std::set<BitVector> bvset,
 	return tempset;
 }
 
+//part II
 Automaton build(std::set<BitVector> bvset, std::map<unsigned,int> pres, int b,
 								Automaton theAuto){
 	std::set<BitVector> tempset = solveFromState(bvset, pres, b);
@@ -34,6 +36,7 @@ Automaton build(std::set<BitVector> bvset, std::map<unsigned,int> pres, int b,
 	return theAuto;
 }
 
+//part II
 Automaton automair(node<expr>* root){
 	Automaton theAuto;
 	ExprTree * tree = new ExprTree();
@@ -64,9 +67,11 @@ Automaton automair(node<expr>* root){
 	return theAuto;
 }
 
+//part II
 Automaton createAutomaton(ExprTree * exptree);
 
-Automaton conjunction(ExprTree * exptree){ //NOG TESTEN!!!!
+//part II
+Automaton conjunction(ExprTree * exptree){
 	Automaton theAuto, theAuto1, theAuto2;
 	ExprTree * exptree1 = new ExprTree();
 	ExprTree * exptree2 = new ExprTree();
@@ -80,6 +85,7 @@ Automaton conjunction(ExprTree * exptree){ //NOG TESTEN!!!!
 	return theAuto;
 }
 
+//part II
 Automaton quantification(ExprTree * exptree){
 	ExprTree * temptree = new ExprTree();
 	temptree->createFromNode(exptree->getRoot()->getRight());
@@ -88,6 +94,7 @@ Automaton quantification(ExprTree * exptree){
 	return theAuto;
 }
 
+//part II
 Automaton createAutomaton(ExprTree * exptree){
     Automaton theAuto;
     switch(exptree->getRoot()->getData().type) {
@@ -184,9 +191,9 @@ void menu(bool debug, std::istream& inStr, std::ostream &out){
 			if(t->create(in.substr(4,string::npos))) {
 				theAuto = createAutomaton(t);
 				theAuto.makeDeterministic(theAuto);
-     //   if(debug) {
+        if(debug) {
         	theAuto.print(out);
-      //  }
+        }
     	} else if(!debug) {
 			out << "Error: invalid formula" <<std::endl;
    		}
