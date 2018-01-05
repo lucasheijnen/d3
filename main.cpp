@@ -1,3 +1,5 @@
+//Max Blankestijn s1819658 & Loes Dekker s1850024
+
 #include <iostream>
 #include "Automaton.h"
 #include "exprtree.h"

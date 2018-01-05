@@ -1,0 +1,11 @@
+READ ME
+
+Compiled with g++ version 5.4.0-6ubuntu1~16.04.5.
+
+Tested with valgrind, memory leaks were found in the part of the program that was given to us.
+
+We have finished part I and have started with part II (not finished yet).
+Every function that belongs to part II has "//part II" written above it. 
+
+Max Blankestijn s1819658
+Loes Dekker s1850024

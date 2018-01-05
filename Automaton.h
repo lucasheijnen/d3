@@ -1,3 +1,5 @@
+//Max Blankestijn s1819658 & Loes Dekker s1850024
+
 #ifndef AUTOMATON_H
 #define AUTOMATON_H
 

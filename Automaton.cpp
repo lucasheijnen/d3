@@ -1,3 +1,5 @@
+//Max Blankestijn s1819658 & Loes Dekker s1850024
+
 #include "Automaton.h"
 
 // TODO (voor studenten - deel 1): VOEG HIER DE IMPLEMENTATIES VAN DE OPERATIES IN Automaton.h TOE
