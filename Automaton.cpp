@@ -35,11 +35,11 @@ bool Automaton::inFinalState() const{
 	return false;
 }
 
-int cantor(int num1, int num2){
+int cantor(unsigned int num1, unsigned int num2){
 	return (.5*(num1+num2)*(num1+num2+1)+num2);
 }
 
-void invCan(int num, int &num1, int &num2){
+void invCan(unsigned int num, int &num1, int &num2){
 	double temp1, temp2;
 	temp1 = floor((pow(8*num+1,.5)-1)/2);
 	temp2 = (pow(temp1, 2) +  temp1) /2;
@@ -108,8 +108,9 @@ void Automaton::next(const BitVector input){
 	std::set<State> temp = currentStates;
 	currentStates.clear();
 	for(auto i : temp)
-		currentStates.insert(
-		transitions[i][input].begin(), transitions[i][input].end());
+		if(transitions[i].find(input) != transitions[i].end())
+			currentStates.insert(
+			transitions[i][input].begin(), transitions[i][input].end());
 }
 
 void Automaton::printStates(std::ostream &str, const std::set<State> s) {
@@ -229,4 +230,13 @@ void Automaton::addVar(unsigned x){
 void Automaton::insertFreeVars(Automaton fa2){
 	for(auto i : fa2.alphabet)
 		if(alphabet.find(i) == alphabet.end()) addToAlphabet(i);
+}
+
+Automaton* Automaton::nulBit(){
+	BitVector temp;
+	for(auto i : alphabet) {
+		temp.insert(std::pair<unsigned, bool>(i, 0));	
+	}
+	next(temp);
+	return this;
 }

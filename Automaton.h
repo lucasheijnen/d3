@@ -126,6 +126,7 @@ class Automaton {
 				transitions do not contain var 
 		**/
 		void quant(unsigned var);
+		Automaton* nulBit();
 	private:
 		/**
       * Read a single BitVector as input and move from the set of current states to the set of next states

@@ -48,11 +48,10 @@ Automaton automair(node<expr>* root){
 	int b = 0, temp;
 	tree->createFromNode(root);
 	tree->getPresburgerMap(pres, b);
-	std::cerr << b << std::endl;
-	if(b<0) { //cantor werkt niet met negatieve getallen
-	 	b*=-1;
-		for(auto i : pres)i.second*=-1;
-	}
+//	if(b<0) { //cantor werkt niet met negatieve getallen
+//	 	b*=-1;
+//		for(auto i : pres)i.second*=-1;
+//	}
 	theAuto.addState(b);
 	theAuto.markInitial(b);
 	for(auto i : pres) theAuto.addVar(i.first);
@@ -179,7 +178,7 @@ bool verifyAutomaton(Automaton& theAuto, string formula, bool debug, std::ostrea
         if(debug) {
             printBitVectors(out,l);
         }
-	return theAuto.inFinalState();
+	return theAuto.inFinalState();// || theAuto.nulBit()->inFinalState();
 }
 
 
@@ -208,6 +207,8 @@ void menu(bool debug, std::istream& inStr, std::ostream &out){
 		}
 		else if(in.substr(0,3) == "end")
 			return;
+		else if(in.substr(0,5) == "print")
+			theAuto.print(out);
 		else if(!debug)
 			out << "Error: invalid input" <<std::endl;
 	}
