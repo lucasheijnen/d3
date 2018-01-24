@@ -155,6 +155,10 @@ class Automaton {
 							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q);
 
+		State merge(std::set<State> states, State largest);
+
+		std::set<State> unmerge(State state, State largest, std::set<State> oregeno);
+
     // the set of all states
 		std::set<State> states;
 

@@ -201,6 +201,7 @@ void Automaton::makeDeterministic(Automaton& fa) {
 			recDet(fa, visited, newTrans, i, Q);
 		}
 		states = visited;
+		transitions = newTrans;
 		//
 		//for every initialize
 			//call recursion function(Automaton, list/set::Visited&, int::newState):
@@ -214,6 +215,30 @@ void Automaton::makeDeterministic(Automaton& fa) {
 
 }
 
+State Automaton::merge(std::set<State> mstates, State largest){
+	if(mstates.size() == 1) return *mstates.begin();	
+	State temp;
+	temp = *mstates.begin();
+	for(std::set<State>::iterator i = std::next(mstates.begin()); i != mstates.end(); ++i)		
+		temp = cantor(temp, *i);
+	return temp + largest;
+}
+
+std::set<State> Automaton::unmerge(State state, State largest, std::set<State> oregeno){
+	std::set<State> tempSet;
+	if(oregeno.find(state) != oregeno.end()) tempSet.insert(state);
+	else {
+		int num1, num2;
+		num1 = state - largest;
+		while(states.find(num1) != states.end()){
+			invCan(num1, num1, num2);
+			tempSet.insert(num2);
+		}
+		tempSet.insert(num1);
+	}
+	return tempSet;
+}
+
 void Automaton::recDet(Automaton fa, std::set<State> &visited,
 							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q) {
@@ -224,20 +249,20 @@ void Automaton::recDet(Automaton fa, std::set<State> &visited,
 		if(visited.find(newState) == visited.end()) {
 			//TODO bepaal set original states uit newState -> originalStates
 			visited.insert(newState); fa.states.insert(newState);
-			for(auto state : originalStates) //bepaal alle originele states verwerkt in newState
+			for(auto state : unmerge(newState, *prev(fa.states.end()), fa.states)) //bepaal alle originele states verwerkt in newState
 				for(auto trans : fa.transitions[state]) //itereer door transities
 						for(auto i : trans.second) //itereer door set states
 							tempMap[trans.first].insert(i);//voeg alle states toe aan set in tempMap
 			//tempMap bevat BV->alle states die bereikt kunnen worden uit de originalStates
 			for(auto temp : tempMap) {
-				//merged = ;//TODO temp.second (set) omzetten in merged
+				merged = merge(temp.second, *prev(fa.states.end()));//TODO temp.second (set) omzetten in merged
 				Q.push(merged);
 				newStates.clear(); newStates.insert(merged); //transitie met alleen merged = deterministic
 				temp.second.swap(newStates);//zet merged in de map om later te inserten in transition
 			}
-			newTrans.insert(std::pair<State, std::map<State, std::set<State>>(newState, tempMap));
+			newTrans.insert(std::pair<State, std::map<BitVector, std::set<State>>>(newState, tempMap));
 			while(!Q.empty()){//states die bereikt kunnen worden vanaf deze ook verwerken
-				recDet(fa, visited, newTrans, Q.front());
+				recDet(fa, visited, newTrans, Q.front(), Q);
 				Q.pop();
 			}
 		}
