@@ -149,6 +149,9 @@ class Automaton {
     */
     static void printTransitionLabel(std::ostream &str, const BitVector t);
 
+		void recDet(Automaton fa, std::set<State> &visited,
+							std::map<State, std::map<BitVector, std::set<State> > > newTrans,
+							State newState, std::queue<State> &Q);
 
     // the set of all states
 		std::set<State> states;

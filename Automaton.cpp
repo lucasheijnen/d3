@@ -1,6 +1,7 @@
 //Max Blankestijn s1819658 & Loes Dekker s1850024
 
 #include "Automaton.h"
+#include <queue>
 
 // TODO (voor studenten - deel 1): VOEG HIER DE IMPLEMENTATIES VAN DE OPERATIES IN Automaton.h TOE
 
@@ -226,7 +227,7 @@ void Automaton::makeDeterministic(Automaton& fa) {
 		fa.eliminateLambda(fa);
 		std::set<State> visited;
 		std::map<State, std::map<BitVector, std::set<State> > > newTrans;
-		std::queue Q;
+		std::queue<State> Q;		
 		for(auto i : fa.initialStates) {
 			recDet(fa, visited, newTrans, i, Q);
 		}
@@ -241,16 +242,17 @@ void Automaton::makeDeterministic(Automaton& fa) {
 							//merge set of states into set of one states
 							//add transition from current with bitv to set
 							//call recursion on destintion of created transition
+
 }
 
-void Automaton::recDet(Automaton fa, std::set &visited,
+void Automaton::recDet(Automaton fa, std::set<State> &visited,
 							std::map<State, std::map<BitVector, std::set<State> > > newTrans,
-							State newState, std::queue &Q) {
+							State newState, std::queue<State> &Q) {
 		State merged;
 		std::set<State> newStates; //set voor de nieuwe transitie
 		std::set<State> originalStates;
 		std::map<BitVector, std::set<State>> tempMap;
-		if(visited.find(newState) != visited.end()) {
+		if(visited.find(newState) == visited.end()) {
 			//TODO bepaal set original states uit newState -> originalStates
 			visited.insert(newState); fa.states.insert(newState);
 			for(auto state : originalStates) //bepaal alle originele states verwerkt in newState

@@ -4,6 +4,16 @@
 #include "Automaton.h"
 #include "exprtree.h"
 
+int fold(int i){
+	if(i >= 0) return 2 * i;
+	else return -2 * i - 1;
+}
+
+int defold(int i){
+	if(i%2 == 1) return -.5 * (i + 1);
+	else return .5 * i;
+}
+
 //part II
 std::set<BitVector> solveFromState(std::set<BitVector> bvset,
 					std::map<unsigned,int> pres, int b){
@@ -28,12 +38,12 @@ Automaton build(std::set<BitVector> bvset, std::map<unsigned,int> pres, int b,
 		bv = i;
 		for(auto j : pres) temp -= bv[j.first] * j.second;
 		temp = temp/2;
-		theAuto.addTransition(b, bv, temp);
-		if(!theAuto.stateInstates(temp)){
-			theAuto.addState(temp);
+		theAuto.addTransition(fold(b), bv, fold(temp));
+		if(!theAuto.stateInstates(fold(temp))){
+			theAuto.addState(fold(temp));
 			theAuto = build(bvset, pres, temp, theAuto);
 		}
-		else theAuto.addState(temp);
+		else theAuto.addState(fold(temp));
 	}
 	return theAuto;
 }
@@ -52,8 +62,8 @@ Automaton automair(node<expr>* root){
 //	 	b*=-1;
 //		for(auto i : pres)i.second*=-1;
 //	}
-	theAuto.addState(b);
-	theAuto.markInitial(b);
+	theAuto.addState(fold(b));
+	theAuto.markInitial(fold(b));
 	for(auto i : pres) theAuto.addVar(i.first);
 	for(int i = 0; i != pow(2, pres.size()); ++i){
 		temp = i;
