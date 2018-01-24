@@ -201,7 +201,6 @@ void menu(bool debug, std::istream& inStr, std::ostream &out){
 		if(in.substr(0,5) == "read "){
 			if(t->create(in.substr(4,string::npos))) {
 				theAuto = createAutomaton(t);
-				theAuto.makeDeterministic(theAuto);
         if(debug) {
         	theAuto.print(out);
         }
@@ -219,6 +218,8 @@ void menu(bool debug, std::istream& inStr, std::ostream &out){
 			return;
 		else if(in.substr(0,5) == "print")
 			theAuto.print(out);
+		else if(in.substr(0,6) == "lambda")
+			theAuto.makeDeterministic(theAuto);
 		else if(!debug)
 			out << "Error: invalid input" <<std::endl;
 	}

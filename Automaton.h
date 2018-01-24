@@ -88,14 +88,14 @@ class Automaton {
      * Prints the current automaton to the specified stream
    */
 		void print(std::ostream &str) const;
-		
+
 		/**
 			* stateInstates (PART II)
 		  * Returns true when given state is in the set of states of the automaton
 			* Param: state: State to check
 		**/
 		bool stateInstates(State state);
-		
+
 		/**
 			* addVar (PART II)
 		  * Inserts given unsigned to the alphabet of the automaton
@@ -104,7 +104,7 @@ class Automaton {
 			* post: automaton whose alphabet contains the given unsigned
 		**/
 		void addVar(unsigned x);
-		
+
 		/**
 			* insertFreeVars (PART II)
 		  * Inserts the unsigneds to the alphabet that are in the alphabet of the
@@ -114,16 +114,16 @@ class Automaton {
 			* post: automaton containing all unsigneds in the alphabet of fa2
 		**/
 		void insertFreeVars(Automaton fa2);
-		
+
 		/**
 			* quant (PART II)
-			* Deletes given unsigned from every transition and the alphabet from the 
+			* Deletes given unsigned from every transition and the alphabet from the
 			automaton.
-			* param: var: unsigned that should be deleted from the alphabet and every 
-				transition 
+			* param: var: unsigned that should be deleted from the alphabet and every
+				transition
 			* pre: automaton
 			* post: automaton whose alphabet does not contain var and whose
-				transitions do not contain var 
+				transitions do not contain var
 		**/
 		void quant(unsigned var);
 		Automaton* nulBit();
@@ -139,6 +139,8 @@ class Automaton {
     */
     void eliminateLambda(Automaton& fa);
 
+		bool recLam(Automaton& fa, std::set<State>& visited, State state);
+
     /**
       * Prints the set of states s to the specified stream
       */
@@ -150,7 +152,7 @@ class Automaton {
     static void printTransitionLabel(std::ostream &str, const BitVector t);
 
 		void recDet(Automaton fa, std::set<State> &visited,
-							std::map<State, std::map<BitVector, std::set<State> > > newTrans,
+							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q);
 
     // the set of all states
