@@ -126,7 +126,9 @@ class Automaton {
 				transitions do not contain var
 		**/
 		void quant(unsigned var);
-		Automaton* nulBit();
+		Automaton* nulBit();		
+		void comp();
+
 	private:
 		/**
       * Read a single BitVector as input and move from the set of current states to the set of next states
@@ -154,6 +156,7 @@ class Automaton {
 		void recDet(Automaton fa, std::set<State> &visited,
 							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q);
+							
 
 		State merge(std::set<State> states, State largest);
 

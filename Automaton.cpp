@@ -197,22 +197,25 @@ void Automaton::makeDeterministic(Automaton& fa) {
 		std::set<State> visited;
 		std::map<State, std::map<BitVector, std::set<State> > > newTrans;
 		std::queue<State> Q;
+		alphabet = fa.alphabet;
 		for(auto i : fa.initialStates) {
 			recDet(fa, visited, newTrans, i, Q);
 		}
 		states = visited;
 		transitions = newTrans;
-		//
-		//for every initialize
-			//call recursion function(Automaton, list/set::Visited&, int::newState):
-				//for every pair <bitvector and set of States>
-					//if current not in visited-list
-						//add current to list of visited states
-						//for every transition
-							//merge set of states into set of one states
-							//add transition from current with bitv to set
-							//call recursion on destintion of created transition
-
+		initialStates = currentStates = fa.initialStates;
+		if(visited.find(-1) != visited.end()){ //thrash state
+			int temp;
+			BitVector bv;
+			for(int i = 0; i != pow(2, alphabet.size()); ++i){
+				temp = i;
+				for(auto j : alphabet){
+					bv[j] = temp&1;
+					temp >>= 1;
+				}
+				transitions[-1][bv].insert(-1);
+			}
+		}
 }
 
 State Automaton::merge(std::set<State> mstates, State largest){
@@ -230,10 +233,11 @@ std::set<State> Automaton::unmerge(State state, State largest, std::set<State> o
 	else {
 		int num1, num2;
 		num1 = state - largest;
-		while(states.find(num1) != states.end()){
+		do{
 			invCan(num1, num1, num2);
 			tempSet.insert(num2);
 		}
+		while(oregeno.find(num1) == oregeno.end());
 		tempSet.insert(num1);
 	}
 	return tempSet;
@@ -243,30 +247,44 @@ void Automaton::recDet(Automaton fa, std::set<State> &visited,
 							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q) {
 		State merged;
+		BitVector bv; int temp;
 		std::set<State> newStates; //set voor de nieuwe transitie
 		std::set<State> originalStates;
 		std::map<BitVector, std::set<State>> tempMap;
 		if(visited.find(newState) == visited.end()) {
-			//TODO bepaal set original states uit newState -> originalStates
-			visited.insert(newState); fa.states.insert(newState);
-			for(auto state : unmerge(newState, *prev(fa.states.end()), fa.states)) //bepaal alle originele states verwerkt in newState
+			originalStates = unmerge(newState, *prev(fa.states.end()), fa.states);
+			visited.insert(newState); //states.insert(newState);
+			for(auto state : originalStates){ //bepaal alle originele states verwerkt in newState
+				if(fa.finalStates.find(state) != fa.finalStates.end()) 
+					finalStates.insert(newState);
 				for(auto trans : fa.transitions[state]) //itereer door transities
-						for(auto i : trans.second) //itereer door set states
+						for(auto i : trans.second) //itereer door set states 
 							tempMap[trans.first].insert(i);//voeg alle states toe aan set in tempMap
+			}
 			//tempMap bevat BV->alle states die bereikt kunnen worden uit de originalStates
-			for(auto temp : tempMap) {
-				merged = merge(temp.second, *prev(fa.states.end()));//TODO temp.second (set) omzetten in merged
+			for(int i = 0; i != pow(2, fa.alphabet.size()); ++i){
+				temp = i;
+				for(auto j : fa.alphabet){
+					bv[j] = temp&1;
+					temp >>= 1;
+				}
+				if(tempMap.find(bv) == tempMap.end()) {
+					if(visited.find(-1) == visited.end()) visited.insert(-1);
+					tempMap[bv].insert(-1);
+				}
+				else {
+				merged = merge(tempMap[bv], *prev(fa.states.end()));
 				Q.push(merged);
-				newStates.clear(); newStates.insert(merged); //transitie met alleen merged = deterministic
-				temp.second.swap(newStates);//zet merged in de map om later te inserten in transition
+				tempMap[bv].clear(); tempMap[bv].insert(merged); //transitie met alleen merged = deterministic
+				}
 			}
 			newTrans.insert(std::pair<State, std::map<BitVector, std::set<State>>>(newState, tempMap));
 			while(!Q.empty()){//states die bereikt kunnen worden vanaf deze ook verwerken
-				recDet(fa, visited, newTrans, Q.front(), Q);
-				Q.pop();
+				newState = Q.front(); Q.pop();
+				recDet(fa, visited, newTrans, newState, Q);
 			}
 		}
-	}
+}
 
 void Automaton::quant(unsigned var){
     BitVector bv;
@@ -314,4 +332,11 @@ Automaton* Automaton::nulBit(){
 	}
 	next(temp);
 	return this;
+}
+
+void Automaton::comp(){
+	std::set<State> newFinal;
+	for(auto i : states)
+		if(finalStates.find(i) == finalStates.end()) newFinal.insert(i);
+	finalStates = newFinal;
 }

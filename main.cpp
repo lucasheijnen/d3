@@ -58,10 +58,6 @@ Automaton automair(node<expr>* root){
 	int b = 0, temp;
 	tree->createFromNode(root);
 	tree->getPresburgerMap(pres, b);
-//	if(b<0) { //cantor werkt niet met negatieve getallen
-//	 	b*=-1;
-//		for(auto i : pres)i.second*=-1;
-//	}
 	theAuto.addState(fold(b));
 	theAuto.markInitial(fold(b));
 	for(auto i : pres) theAuto.addVar(i.first);
@@ -105,11 +101,21 @@ Automaton quantification(ExprTree * exptree){
 	return theAuto;
 }
 
+Automaton complement(ExprTree * exptree){
+	ExprTree * temptree = new ExprTree();
+	temptree->createFromNode(exptree->getRoot()->getLeft());
+	Automaton temp = createAutomaton(temptree);
+	Automaton theAuto;
+	theAuto.makeDeterministic(temp);
+	theAuto.comp();
+	return theAuto;
+}
+
 //part II
 Automaton createAutomaton(ExprTree * exptree){
     Automaton theAuto;
     switch(exptree->getRoot()->getData().type) {
-    	case expr::NOT: break;
+    	case expr::NOT: theAuto = complement(exptree); break;
     	case expr::EXISTS: theAuto = quantification(exptree); break;
 		case expr::AND: theAuto = conjunction(exptree); break;
 		case expr::EQUALS: theAuto = automair(exptree->getRoot()); break;
