@@ -327,10 +327,17 @@ void Automaton::insertFreeVars(Automaton fa2){
 
 Automaton* Automaton::nulBit(){
 	BitVector temp;
-	for(auto i : alphabet) {
+	std::set<State> visited;
+	bool loop = false;
+	for(auto i : alphabet)
 		temp.insert(std::pair<unsigned, bool>(i, 0));
+	while(!inFinalState() & !loop){
+		visited.insert(currentStates.begin(), currentStates.end());
+		next(temp);
+		loop = true;
+		for(auto i : currentStates)
+			if(visited.find(i) == visited.end()) loop = false;
 	}
-	next(temp);
 	return this;
 }
 
