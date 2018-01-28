@@ -219,10 +219,10 @@ void Automaton::makeDeterministic(Automaton& fa) {
 }
 
 State Automaton::merge(std::set<State> mstates, State largest){
-	if(mstates.size() == 1) return *mstates.begin();	
+	if(mstates.size() == 1) return *mstates.begin();
 	State temp;
 	temp = *mstates.begin();
-	for(std::set<State>::iterator i = std::next(mstates.begin()); i != mstates.end(); ++i)		
+	for(std::set<State>::iterator i = std::next(mstates.begin()); i != mstates.end(); ++i)
 		temp = cantor(temp, *i);
 	return temp + largest;
 }
@@ -255,10 +255,10 @@ void Automaton::recDet(Automaton fa, std::set<State> &visited,
 			originalStates = unmerge(newState, *prev(fa.states.end()), fa.states);
 			visited.insert(newState); //states.insert(newState);
 			for(auto state : originalStates){ //bepaal alle originele states verwerkt in newState
-				if(fa.finalStates.find(state) != fa.finalStates.end()) 
+				if(fa.finalStates.find(state) != fa.finalStates.end())
 					finalStates.insert(newState);
 				for(auto trans : fa.transitions[state]) //itereer door transities
-						for(auto i : trans.second) //itereer door set states 
+						for(auto i : trans.second) //itereer door set states
 							tempMap[trans.first].insert(i);//voeg alle states toe aan set in tempMap
 			}
 			//tempMap bevat BV->alle states die bereikt kunnen worden uit de originalStates
@@ -336,7 +336,7 @@ Automaton* Automaton::nulBit(){
 		next(temp);
 		loop = true;
 		for(auto i : currentStates)
-			if(visited.find(i) == visited.end()) loop = false;
+			if(visited.find(i) == visited.end()) loop = false; //kan vm met 'break;' geen bools nodig
 	}
 	return this;
 }
