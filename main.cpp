@@ -4,12 +4,16 @@
 #include "Automaton.h"
 #include "exprtree.h"
 
+//fold
+//turnes integer into unique positive integer
 int fold(int i){
-	if(i >= 0) return 2 * i;
-	else return -2 * i - 1;
+	if(i >= 0) return 2 * i; //every positive int turns into an even int
+	else return -2 * i - 1; //every negative int turns into an odd positive int
 }
 
-//part II
+//solveFromState
+//determines which of the given bitVectors in given std::set<BitVector> bvSet
+//lead to a non trash state
 std::set<BitVector> solveFromState(std::set<BitVector> bvSet,
 					std::map<unsigned,int> pres, int b){
 	std::set<BitVector> tempSet;
@@ -22,28 +26,31 @@ std::set<BitVector> solveFromState(std::set<BitVector> bvSet,
 	return tempSet;
 }
 
-//part II
+//build
+//generates new states from the given state and inserts transitions into
+//the given Automaton theAuto
 Automaton build(std::set<BitVector> bvSet, std::map<unsigned,int> pres, int b,
 								Automaton theAuto){
-	std::set<BitVector> tempSet = solveFromState(bvSet, pres, b);
-	BitVector bv;
+	std::set<BitVector> tempSet = solveFromState(bvSet, pres, b); //now contains
+	BitVector bv;			//only bitVectors that lead to a non trash state
 	int temp;
 	for(auto i : tempSet){
 		temp = b;
 		bv = i;
-		for(auto j : pres) temp -= bv[j.first] * j.second;
-		temp = temp/2;
+		for(auto j : pres) temp -= bv[j.first] * j.second; //transition
+		temp = temp/2; //new state reached by transition with bitvector from b
 		theAuto.addTransition(fold(b), bv, fold(temp));
-		if(!theAuto.contains(fold(temp))){
-			theAuto.addState(fold(temp));
-			theAuto = build(bvSet, pres, temp, theAuto);
+		if(!theAuto.contains(fold(temp))){ //if new state was reached, build all
+			theAuto.addState(fold(temp)); //possible transitions from this state
+			theAuto = build(bvSet, pres, temp, theAuto); //in recursive way
 		}
 		else theAuto.addState(fold(temp));
 	}
 	return theAuto;
 }
 
-//part II
+//automair
+//creates automaton corresponding to given root
 Automaton automair(node<expr>* root){
 	Automaton theAuto;
 	ExprTree * tree = new ExprTree();
@@ -52,77 +59,84 @@ Automaton automair(node<expr>* root){
 	BitVector bv;
 	int b = 0, temp;
 	tree->createFromNode(root);
-	tree->getPresburgerMap(pres, b);
-	theAuto.addState(fold(b));
+	tree->getPresburgerMap(pres, b); //initialState (b) is found, occurence of
+	theAuto.addState(fold(b));       //every free var is counted
 	theAuto.markInitial(fold(b));
-	for(auto i : pres) theAuto.addVar(i.first);
+	for(auto i : pres) theAuto.addVar(i.first); //add free vars to automaton
 	for(int i = 0; i != pow(2, pres.size()); ++i){
 		temp = i;
 		for(auto j : pres){
 			bv[j.first] = temp&1;
 			temp >>= 1;
 		}
-		bvSet.insert(bv);
+		bvSet.insert(bv); //inserts all possible bitVectors in std::set<State> bvSet
 	}
-	theAuto = build(bvSet, pres, b, theAuto);
-	theAuto.markFinal(0);
+	theAuto = build(bvSet, pres, b, theAuto); //builds the automaton from given b
+	theAuto.markFinal(0);											//and presburger map pres
 	delete tree;
 	return theAuto;
 }
 
-//part II
 Automaton createAutomaton(ExprTree * exptree);
 
-//part II
+//conjunction
+//intersects the automaton corresponding to the left subtree of the root of the
+//given ExprTree exptree with the automaton corresponding to its right subtree
 Automaton conjunction(ExprTree * exptree){
 	Automaton theAuto, theAuto1, theAuto2;
 	ExprTree * exptree1 = new ExprTree();
 	ExprTree * exptree2 = new ExprTree();
 	exptree1->createFromNode(exptree->getRoot()->getLeft());
 	exptree2->createFromNode(exptree->getRoot()->getRight());
-	theAuto1 = createAutomaton(exptree1);
-	theAuto2 = createAutomaton(exptree2);
-	theAuto1.insertFreeVars(theAuto2);
-	theAuto2.insertFreeVars(theAuto1);
+	theAuto1 = createAutomaton(exptree1); //contains automaton corresponding to left child
+	theAuto2 = createAutomaton(exptree2); //contains automaton corresponding to right child
+	theAuto1.insertFreeVars(theAuto2); //free vars in theAuto2 are added to theAuto1
+	theAuto2.insertFreeVars(theAuto1); //free vars in theAuto1 are added to theAuto2
 	theAuto.intersect(theAuto1, theAuto2);
 	delete exptree1; delete exptree2;
 	return theAuto;
 }
 
-//part II
+//quantification
+//projects free variable (left child) of root of given ExprTree exptree on the automaton
+//created from the formual in right subtree of exptree
 Automaton quantification(ExprTree * exptree){
 	ExprTree * tempTree = new ExprTree();
 	tempTree->createFromNode(exptree->getRoot()->getRight());
 	Automaton theAuto = createAutomaton(tempTree);
 	theAuto.project(exptree->getRoot()->getLeft()->getData().variable);
+	//projects the variable upon the automaton already contained in theAuto
 	delete tempTree;
 	return theAuto;
 }
 
-//part II
+//complement
+//creates deterministic automaton corresponding to non-complemented formula
+//in left subtree of root of given ExprTree exptree before complementing it
 Automaton complement(ExprTree * exptree){
 	ExprTree * tempTree = new ExprTree();
 	tempTree->createFromNode(exptree->getRoot()->getLeft());
-	Automaton temp = createAutomaton(tempTree);
-	Automaton theAuto, nogeen;
-	nogeen.makeDeterministic(temp);
-	theAuto.complement(nogeen);
+	Automaton temp = createAutomaton(tempTree);	//temp is automaton of non-
+	Automaton theAuto, detAuto;									//complemented formula
+	detAuto.makeDeterministic(temp); //detAuto is temp made deterministic
+	theAuto.complement(detAuto); //theAuto is the complemented automaton
 	delete tempTree;
 	return theAuto;
 }
 
-//part II
+//createAutomaton
+//uses given ExprTree exptree to create a corresponding automaton
 Automaton createAutomaton(ExprTree * exptree){
   Automaton theAuto;
-  switch(exptree->getRoot()->getData().type) {
+  switch(exptree->getRoot()->getData().type) { //root contains operation
   	case expr::NOT: theAuto = complement(exptree); break;
    	case expr::EXISTS: theAuto = quantification(exptree); break;
 		case expr::AND: theAuto = conjunction(exptree); break;
 		case expr::EQUALS: theAuto = automair(exptree->getRoot()); break;
    	default: break;
   }
-  theAuto.restate();
-  return theAuto;
+  theAuto.restate(); //renames every state so that the biggest state is
+  return theAuto;    //equal to the amount of states - 1
 }
 
 void addVarToBitVectors(std::list<BitVector> &l, const unsigned index, int val) {
@@ -194,7 +208,7 @@ bool verifyAutomaton(Automaton& theAuto, string formula, bool debug, std::ostrea
         if(debug) {
             printBitVectors(out,l);
         }
-	return theAuto.inFinalState() || theAuto.nulBit()->inFinalState();
+	return theAuto.inFinalState() || theAuto.nulBit();
 }
 
 

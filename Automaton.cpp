@@ -208,22 +208,22 @@ void Automaton::makeDeterministic(Automaton& fa) {
 }
 
 State Automaton::merge(std::set<State> mStates, State largest) const{
-	if(mStates.size() == 1) return *mStates.begin();
+	if(mStates.size() == 1) return *mStates.begin(); //not enough states to merge
 	State temp;
 	temp = *mStates.begin();
 	for(std::set<State>::iterator i = std::next(mStates.begin()); i != mStates.end(); ++i)
-		temp = cantor(temp, *i);
-	return temp + largest;
+		temp = cantor(temp, *i); //merge all states in set with cantor pairing
+	return temp + largest; //to avoid overlap with already existing state
 }
 
-std::set<State> Automaton::unmerge(State state, State largest, std::set<State> original) const {
+std::set<State> Automaton::unmerge(State state, std::set<State> original) const {
 	std::set<State> tempSet;
 	int num1, num2;
-	if(original.find(state) != original.end()) tempSet.insert(state);
+	if(original.find(state) != original.end()) tempSet.insert(state);//state wasn't merged
 	else {
-		num1 = state - largest;
+		num1 = state - *prev(fa.states.end());
 		do {
-			invCan(num1, num1, num2);
+			invCan(num1, num1, num2);//unmerge states until all original states were found
 			tempSet.insert(num2);
 		} while(original.find(num1) == original.end());
 		tempSet.insert(num1);
@@ -235,12 +235,12 @@ void Automaton::recDet(Automaton fa, std::set<State> &visited,
 							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q) {
 	State merged;
-	BitVector bv; 
+	BitVector bv;
 	int temp;
 	std::set<State> originalStates, newStates; //set voor de nieuwe transitie
 	std::map<BitVector, std::set<State>> tempMap;
 	if(visited.find(newState) == visited.end()) {
-		originalStates = unmerge(newState, *prev(fa.states.end()), fa.states);
+		originalStates = unmerge(newState, fa.states);
 		visited.insert(newState); //states.insert(newState);
 		for(auto state : originalStates){ //bepaal alle originele states verwerkt in newState
 			if(fa.finalStates.find(state) != fa.finalStates.end())
@@ -261,8 +261,8 @@ void Automaton::recDet(Automaton fa, std::set<State> &visited,
 			}
 			else {
 				merged = merge(tempMap[bv], *prev(fa.states.end()));
-				Q.push(merged); 
-				tempMap[bv].clear(); tempMap[bv].insert(merged); 
+				Q.push(merged);
+				tempMap[bv].clear(); tempMap[bv].insert(merged);
 				} //transitie met alleen merged = deterministic
 		}
 		newTrans.insert(std::pair<State, std::map<BitVector, std::set<State>>>(newState, tempMap));
@@ -281,14 +281,14 @@ void Automaton::project(const unsigned variable){
   for (auto i : transitions){
     for(auto j : i.second){
       bv = j.first;
-      bv.erase(variable);
-      if(bv.empty()) 
+      bv.erase(variable); //projected variable is erased from temp bitVector
+      if(bv.empty())
       	tempSet.insert(transitions[i.first][j.first].begin(),
-       		transitions[i.first][j.first].end());
-      else tempMap.insert(std::pair<BitVector, std::set<State>>
-       (bv, transitions[i.first][j.first]));
-    }
-    if(!tempSet.empty()) 
+       		transitions[i.first][j.first].end()); //sets that can be reached with
+      else tempMap.insert(std::pair<BitVector, std::set<State>> //lambda transition
+       (bv, transitions[i.first][j.first])); //sets that can be reached with
+    }																				 //'new' bitVector
+    if(!tempSet.empty()) //no lambda transitions
      	tempMap.insert(std::pair<BitVector, std::set<State>>(bv, tempSet));
       newTransitions.insert(std::pair<State,
         std::map<BitVector, std::set<State>>>(i.first, tempMap));
@@ -315,30 +315,30 @@ void Automaton::insertFreeVars(Automaton fa2){
 Automaton* Automaton::nulBit(){
 	BitVector temp;
 	std::set<State> visited;
-	for(auto i : alphabet)
+	for(auto i : alphabet) //zero vector is created
 		temp.insert(std::pair<unsigned, bool>(i, 0));
-	while(!inFinalState()){
-		visited.insert(currentStates.begin(), currentStates.end());
-		next(temp);
+	while(!inFinalState()){ //every state reachable from current state with the
+		visited.insert(currentStates.begin(), currentStates.end()); //0 vector
+		next(temp); //is visited so that accepted states can be found
 		for(auto i : currentStates)
-			if(visited.find(i) == visited.end()) break;
+			if(visited.find(i) == visited.end()) break; //loop is present
 	}
-	return this;
+	return this; //current automaton is returned
 }
 
 void Automaton::complement(Automaton& fa){
 	std::set<State> newFinal;
-	for(auto i : fa.states)
+	for(auto i : fa.states) //all non final states are inserted into newFinal
 		if(fa.finalStates.find(i) == fa.finalStates.end()) newFinal.insert(i);
 	finalStates = newFinal;
-	states = fa.states;
-	transitions = fa.transitions;
+	states = fa.states; //rest of the given automaton fa is copied into this
+	transitions = fa.transitions; //automaton
 	initialStates = fa.initialStates;
 	currentStates = fa.currentStates;
 }
 
 void Automaton::restate(){
-	int count = 0;
+	int count = 0; //new name of first state
 	std::set<State> newStates, newFin, newInit, newCur;
 	std::map<State, State> fromTo;
 	std::map<BitVector, std::set<State>> tempMap;
@@ -348,20 +348,20 @@ void Automaton::restate(){
 		if(finalStates.find(i) != finalStates.end()) newFin.insert(count);
 		if(initialStates.find(i) != initialStates.end()) newInit.insert(count);
 		if(currentStates.find(i) != currentStates.end()) newCur.insert(count);
-		fromTo.insert(std::pair<State, State>(i, count));
-		count++;
+		fromTo.insert(std::pair<State, State>(i, count)); //new state to replace
+		count++;																					//old state are saved
 	}
 	states = newStates;
 	finalStates = newFin;
-	initialStates = newInit;
-	currentStates = newCur;
+	initialStates = newInit;//all set of states are replaced with sets containing
+	currentStates = newCur; //with set containing new names
 	for(auto j : transitions){
 		for(auto k : j.second)
 			for(auto l : k.second)
-				tempMap[k.first].insert(fromTo[l]); 
+				tempMap[k.first].insert(fromTo[l]); //bitvector to new state
 		newTrans.insert(std::pair<State, std::map<BitVector, std::set<State>>>
-			(fromTo[j.first], tempMap));
+			(fromTo[j.first], tempMap)); //new state to tempMap is inserted
 		tempMap.clear();
 	}
-	transitions = newTrans;
-}
+	transitions = newTrans; //transitions containing old states is replaced with
+}													//set containing new states

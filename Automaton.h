@@ -110,11 +110,29 @@ class Automaton {
 		  * Inserts the unsigneds to the alphabet that are in the alphabet of the
 		  given automaton and not in the alphabet of the automaton itself
 			* param: fa2: Automaton that has an alphabet
-			* pre: automaton
+			* pre: automaton exists
 			* post: automaton containing all unsigneds in the alphabet of fa2
 		**/
 		void insertFreeVars(Automaton fa2);
-		Automaton* nulBit();
+
+		/**
+			* nulBit
+			* Abstract: Returns if finalState can be reached by adding 0's to the end
+				of the inputso far. since any binary number followed by any number of zero's
+				is equivalent to the number
+			* pre: An automaton where all desired input is already processed
+			* post: True if a final state can be reached using only 0's else false
+			* return: Boolean
+		**/
+		 nulBit();
+
+		/**
+			* restate
+			* Abstract: converts the current automaton to an equivalent one with
+				states 0,1..n
+			* pre: an automaton exists
+			* post: automaton where all states are renamed to 0,1...n
+		**/
 		void restate();
 
 	private:
@@ -129,6 +147,17 @@ class Automaton {
     */
     void eliminateLambda(Automaton& fa);
 
+		/**
+			* recLam
+			* Abstract:recursive function used by eliminateLambda, used for determining
+				if a finalState can be reached through epsilon transitions
+			*	parameters: fa: automaton to be reviewed, visited: set of already
+				visited states, used to prevent getting stuck in cycles, state: state to
+				be reviewed
+			* pre: An automaton without free variables (only then it's called)
+			* post: True if a final state can be reached else false
+			* return: Boolean
+		**/
 		bool recLam(Automaton& fa, std::set<State>& visited, State state);
 
     /**
@@ -146,8 +175,8 @@ class Automaton {
 			* Abstract: Recursive function to make a an Automaton deterministic using the subset
 			  construction
 			* parameters: fa: automaton to be made deterministic, visited: set of visited states
-			  to avoid cycles, newTrans: the transitions of the new deterministic 
-			  automaton, newState: states one can reach from initial states, Q: a 
+			  to avoid cycles, newTrans: the transitions of the new deterministic
+			  automaton, newState: states one can reach from initial states, Q: a
 			  queue containing the states to be visited
 			* preconditions: there exists an automaton to be made deterministic and
 				one to save de result in
@@ -156,12 +185,34 @@ class Automaton {
 		void recDet(Automaton fa, std::set<State> &visited,
 							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q);
-							
 
-		State merge(std::set<State> mStates, State largest) const;
+		/**
+			* merge
+			* Abstract: combines a set of states into single state
+			* parameters: mStates: set of states to be merged
+			* pre: a non-empty set of states
+			* post: a 'merged' state that can be converted back into the original set
+			* return: 'merged' state
+		**/
+		State merge(std::set<State> mStates) const;
 
-		std::set<State> unmerge(State state, State largest, std::set<State> original) const;
-		
+		/**
+			* unmerge
+			* Abstract: constructs set of state from a State
+			* parameters: state: state to be unmerged, largest: biggest State in then
+				automaton,
+			* pre: a non-empty set of states
+			* post: a 'merged' state that can be converted back into the original set
+			* return: 'merged' state
+		**/
+		std::set<State> unmerge(State state, std::set<State> original) const;
+
+		/**
+			* clearAuto
+			* Abstract: roept .clear() aan op alle private containers van Automaton
+			* pre: existing automaton
+			* post: geclearde automaton
+		**/
 		void clearAuto();
 
     // the set of all states
@@ -181,7 +232,7 @@ class Automaton {
 
     // the set of variables used in transitions
 		std::set<unsigned> alphabet;
-		
+
 };
 
 #endif
