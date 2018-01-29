@@ -9,13 +9,13 @@
 #include <list>
 #include <queue>
 #include <iostream>
+#include <cmath>
 
 typedef std::map<unsigned, bool> BitVector;
 typedef int State;
 
 class Automaton {
 	public:
-		void clearAuto();
 		/**
       * Add the given state (an integer) to the automaton
      */
@@ -90,11 +90,11 @@ class Automaton {
 		void print(std::ostream &str) const;
 
 		/**
-			* stateInstates (PART II)
+			* contains (PART II)
 		  * Returns true when given state is in the set of states of the automaton
 			* Param: state: State to check
 		**/
-		bool stateInstates(State state);
+		bool contains (State state) const;
 
 		/**
 			* addVar (PART II)
@@ -114,20 +114,8 @@ class Automaton {
 			* post: automaton containing all unsigneds in the alphabet of fa2
 		**/
 		void insertFreeVars(Automaton fa2);
-
-		/**
-			* quant (PART II)
-			* Deletes given unsigned from every transition and the alphabet from the
-			automaton.
-			* param: var: unsigned that should be deleted from the alphabet and every
-				transition
-			* pre: automaton
-			* post: automaton whose alphabet does not contain var and whose
-				transitions do not contain var
-		**/
-		void quant(unsigned var);
-		Automaton* nulBit();		
-		void comp();
+		Automaton* nulBit();
+		void restate();
 
 	private:
 		/**
@@ -145,7 +133,7 @@ class Automaton {
 
     /**
       * Prints the set of states s to the specified stream
-      */
+    */
  		static void printStates(std::ostream &str, const std::set<State> s);
 
     /**
@@ -153,14 +141,28 @@ class Automaton {
     */
     static void printTransitionLabel(std::ostream &str, const BitVector t);
 
+		/**
+			* Name: recDet
+			* Abstract: Recursive function to make a an Automaton deterministic using the subset
+			  construction
+			* parameters: fa: automaton to be made deterministic, visited: set of visited states
+			  to avoid cycles, newTrans: the transitions of the new deterministic 
+			  automaton, newState: states one can reach from initial states, Q: a 
+			  queue containing the states to be visited
+			* preconditions: there exists an automaton to be made deterministic and
+				one to save de result in
+			* postconditions: a deterministic automaton in at the this-pointer
+		*/
 		void recDet(Automaton fa, std::set<State> &visited,
 							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q);
 							
 
-		State merge(std::set<State> states, State largest);
+		State merge(std::set<State> mStates, State largest) const;
 
-		std::set<State> unmerge(State state, State largest, std::set<State> oregeno);
+		std::set<State> unmerge(State state, State largest, std::set<State> original) const;
+		
+		void clearAuto();
 
     // the set of all states
 		std::set<State> states;
@@ -179,6 +181,7 @@ class Automaton {
 
     // the set of variables used in transitions
 		std::set<unsigned> alphabet;
+		
 };
 
 #endif

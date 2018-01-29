@@ -9,39 +9,34 @@ int fold(int i){
 	else return -2 * i - 1;
 }
 
-int defold(int i){
-	if(i%2 == 1) return -.5 * (i + 1);
-	else return .5 * i;
-}
-
 //part II
-std::set<BitVector> solveFromState(std::set<BitVector> bvset,
+std::set<BitVector> solveFromState(std::set<BitVector> bvSet,
 					std::map<unsigned,int> pres, int b){
-	std::set<BitVector> tempset;
+	std::set<BitVector> tempSet;
 	int temp;
-	for(auto i : bvset){
+	for(auto i : bvSet){
 		temp = 0;
 		for(auto j : pres) temp += i.find(j.first)->second * j.second;
-		if((temp - b) % 2 == 0) tempset.insert(i);
+		if((temp - b) % 2 == 0) tempSet.insert(i);
 	}
-	return tempset;
+	return tempSet;
 }
 
 //part II
-Automaton build(std::set<BitVector> bvset, std::map<unsigned,int> pres, int b,
+Automaton build(std::set<BitVector> bvSet, std::map<unsigned,int> pres, int b,
 								Automaton theAuto){
-	std::set<BitVector> tempset = solveFromState(bvset, pres, b);
+	std::set<BitVector> tempSet = solveFromState(bvSet, pres, b);
 	BitVector bv;
 	int temp;
-	for(auto i : tempset){
+	for(auto i : tempSet){
 		temp = b;
 		bv = i;
 		for(auto j : pres) temp -= bv[j.first] * j.second;
 		temp = temp/2;
 		theAuto.addTransition(fold(b), bv, fold(temp));
-		if(!theAuto.stateInstates(fold(temp))){
+		if(!theAuto.contains(fold(temp))){
 			theAuto.addState(fold(temp));
-			theAuto = build(bvset, pres, temp, theAuto);
+			theAuto = build(bvSet, pres, temp, theAuto);
 		}
 		else theAuto.addState(fold(temp));
 	}
@@ -53,7 +48,7 @@ Automaton automair(node<expr>* root){
 	Automaton theAuto;
 	ExprTree * tree = new ExprTree();
 	std::map<unsigned,int> pres;
-	std::set<BitVector> bvset;
+	std::set<BitVector> bvSet;
 	BitVector bv;
 	int b = 0, temp;
 	tree->createFromNode(root);
@@ -67,10 +62,11 @@ Automaton automair(node<expr>* root){
 			bv[j.first] = temp&1;
 			temp >>= 1;
 		}
-		bvset.insert(bv);
+		bvSet.insert(bv);
 	}
-	theAuto = build(bvset, pres, b, theAuto);
+	theAuto = build(bvSet, pres, b, theAuto);
 	theAuto.markFinal(0);
+	delete tree;
 	return theAuto;
 }
 
@@ -89,40 +85,44 @@ Automaton conjunction(ExprTree * exptree){
 	theAuto1.insertFreeVars(theAuto2);
 	theAuto2.insertFreeVars(theAuto1);
 	theAuto.intersect(theAuto1, theAuto2);
+	delete exptree1; delete exptree2;
 	return theAuto;
 }
 
 //part II
 Automaton quantification(ExprTree * exptree){
-	ExprTree * temptree = new ExprTree();
-	temptree->createFromNode(exptree->getRoot()->getRight());
-	Automaton theAuto = createAutomaton(temptree);
-	theAuto.quant(exptree->getRoot()->getLeft()->getData().variable);
+	ExprTree * tempTree = new ExprTree();
+	tempTree->createFromNode(exptree->getRoot()->getRight());
+	Automaton theAuto = createAutomaton(tempTree);
+	theAuto.project(exptree->getRoot()->getLeft()->getData().variable);
+	delete tempTree;
 	return theAuto;
 }
 
+//part II
 Automaton complement(ExprTree * exptree){
-	ExprTree * temptree = new ExprTree();
-	temptree->createFromNode(exptree->getRoot()->getLeft());
-	Automaton temp = createAutomaton(temptree);
-	Automaton theAuto;
-	theAuto.makeDeterministic(temp);
-	theAuto.comp();
+	ExprTree * tempTree = new ExprTree();
+	tempTree->createFromNode(exptree->getRoot()->getLeft());
+	Automaton temp = createAutomaton(tempTree);
+	Automaton theAuto, nogeen;
+	nogeen.makeDeterministic(temp);
+	theAuto.complement(nogeen);
+	delete tempTree;
 	return theAuto;
 }
 
 //part II
 Automaton createAutomaton(ExprTree * exptree){
-    Automaton theAuto;
-    switch(exptree->getRoot()->getData().type) {
-    	case expr::NOT: theAuto = complement(exptree); break;
-    	case expr::EXISTS: theAuto = quantification(exptree); break;
+  Automaton theAuto;
+  switch(exptree->getRoot()->getData().type) {
+  	case expr::NOT: theAuto = complement(exptree); break;
+   	case expr::EXISTS: theAuto = quantification(exptree); break;
 		case expr::AND: theAuto = conjunction(exptree); break;
 		case expr::EQUALS: theAuto = automair(exptree->getRoot()); break;
-    	default: break;
-    }
-    // TODO (voor studenten in deel 2): Bouw de Presburger automaat door de meegegeven syntaxtree exptree van de formule te doorlopen
-    return theAuto;
+   	default: break;
+  }
+  theAuto.restate();
+  return theAuto;
 }
 
 void addVarToBitVectors(std::list<BitVector> &l, const unsigned index, int val) {
@@ -222,10 +222,6 @@ void menu(bool debug, std::istream& inStr, std::ostream &out){
 		}
 		else if(in.substr(0,3) == "end")
 			return;
-		else if(in.substr(0,5) == "print")
-			theAuto.print(out);
-		else if(in.substr(0,6) == "lambda")
-			theAuto.makeDeterministic(theAuto);
 		else if(!debug)
 			out << "Error: invalid input" <<std::endl;
 	}

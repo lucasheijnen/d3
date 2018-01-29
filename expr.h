@@ -1,3 +1,5 @@
+//Max Blankestijn s1819658 & Loes Dekker s1850024
+
 /**
  * class: expressions for finite automata
  * @author Diederick Vermetten

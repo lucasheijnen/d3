@@ -1,9 +1,6 @@
 //Max Blankestijn s1819658 & Loes Dekker s1850024
 
 #include "Automaton.h"
-#include <queue>
-
-// TODO (voor studenten - deel 1): VOEG HIER DE IMPLEMENTATIES VAN DE OPERATIES IN Automaton.h TOE
 
 void Automaton::addState(const State state){
 	if(states.find(state) == states.end()) states.insert(state);
@@ -87,18 +84,18 @@ void Automaton::intersect(Automaton& fa1, Automaton& fa2){
 }
 
 void Automaton::addToAlphabet(unsigned varnr){
-	BitVector newbv;
+	BitVector newBv;
 	std::map<State, std::map<BitVector, std::set<State> > > newTransitions;
 	if(alphabet.find(varnr) == alphabet.end()){
 		for(auto i : transitions)
 			for(auto j : transitions[i.first]){
-				newbv = j.first;
-				newbv[varnr] = 0;
+				newBv = j.first;
+				newBv[varnr] = 0;
 				newTransitions[i.first].insert(std::pair<BitVector,
-				std::set<State>>(newbv, j.second));
-				newbv[varnr] = 1;
+				std::set<State>>(newBv, j.second));
+				newBv[varnr] = 1;
 				newTransitions[i.first].insert(std::pair<BitVector,
-				std::set<State>>(newbv, j.second));
+				std::set<State>>(newBv, j.second));
 			}
 		alphabet.insert(varnr);
 		transitions = newTransitions;
@@ -120,7 +117,6 @@ void Automaton::printStates(std::ostream &str, const std::set<State> s) {
         str << st << ", ";
     }
     str << "}";
-
 }
 
 void Automaton::printTransitionLabel(std::ostream &str, const BitVector t) {
@@ -169,75 +165,67 @@ bool Automaton::recLam(Automaton& fa, std::set<State>& visited, State state) {
 	if(fa.finalStates.find(state) != fa.finalStates.end()) return true;
 	visited.insert(state);
 	for(auto trans : fa.transitions[state]) {
-			for(auto dest : trans.second)
-				if(visited.find(dest) == visited.end() && recLam(fa, visited, dest))
-					return true;
+		for(auto dest : trans.second)
+			if(visited.find(dest) == visited.end() && recLam(fa, visited, dest))
+				return true;
 	}
 	return false;
 }
 
 void Automaton::eliminateLambda(Automaton& fa) {
-		std::set<State> visited;
-		std::set<State> newFinal;
-		std::set<State> newStates;
-		if(fa.alphabet.size() == 0) { //no free vars
-			for(auto i : initialStates) {
-				newStates.insert(i);
-				if (recLam(fa, visited, i))
-					newFinal.insert(i);
+	std::set<State> visited;
+	if(fa.alphabet.size() == 0) { //no free vars
+		for(auto i : initialStates) {
+			states.insert(i);
+			if (recLam(fa, visited, i))
+				finalStates.insert(i);
 		}
-		fa.states = newStates;
-		fa.finalStates = newFinal;
-		fa.transitions.clear();
+		transitions.clear();
 	}
 }
 
 void Automaton::makeDeterministic(Automaton& fa) {
-		fa.eliminateLambda(fa);
-		std::set<State> visited;
-		std::map<State, std::map<BitVector, std::set<State> > > newTrans;
-		std::queue<State> Q;
-		alphabet = fa.alphabet;
-		for(auto i : fa.initialStates) {
-			recDet(fa, visited, newTrans, i, Q);
-		}
-		states = visited;
-		transitions = newTrans;
-		initialStates = currentStates = fa.initialStates;
-		if(visited.find(-1) != visited.end()){ //thrash state
-			int temp;
-			BitVector bv;
-			for(int i = 0; i != pow(2, alphabet.size()); ++i){
-				temp = i;
-				for(auto j : alphabet){
-					bv[j] = temp&1;
-					temp >>= 1;
-				}
-				transitions[-1][bv].insert(-1);
+	std::set<State> visited;
+	std::map<State, std::map<BitVector, std::set<State> > > newTrans;
+	std::queue<State> Q;
+	alphabet = fa.alphabet;
+	int temp;
+	BitVector bv;
+	fa.eliminateLambda(fa);
+	for(auto i : fa.initialStates) recDet(fa, visited, newTrans, i, Q);
+	states = visited;
+	transitions = newTrans;
+	initialStates = currentStates = fa.initialStates;
+	if(visited.find(-1) != visited.end()) //thrash state
+		for(int i = 0; i != pow(2, alphabet.size()); ++i){
+			temp = i;
+			for(auto j : alphabet){
+				bv[j] = temp&1;
+				temp >>= 1;
 			}
+			transitions[-1][bv].insert(-1);
 		}
 }
 
-State Automaton::merge(std::set<State> mstates, State largest){
-	if(mstates.size() == 1) return *mstates.begin();
+State Automaton::merge(std::set<State> mStates, State largest) const{
+	if(mStates.size() == 1) return *mStates.begin();
 	State temp;
-	temp = *mstates.begin();
-	for(std::set<State>::iterator i = std::next(mstates.begin()); i != mstates.end(); ++i)
+	temp = *mStates.begin();
+	for(std::set<State>::iterator i = std::next(mStates.begin()); i != mStates.end(); ++i)
 		temp = cantor(temp, *i);
 	return temp + largest;
 }
 
-std::set<State> Automaton::unmerge(State state, State largest, std::set<State> oregeno){
+std::set<State> Automaton::unmerge(State state, State largest, std::set<State> original) const {
 	std::set<State> tempSet;
-	if(oregeno.find(state) != oregeno.end()) tempSet.insert(state);
+	int num1, num2;
+	if(original.find(state) != original.end()) tempSet.insert(state);
 	else {
-		int num1, num2;
 		num1 = state - largest;
-		do{
+		do {
 			invCan(num1, num1, num2);
 			tempSet.insert(num2);
-		}
-		while(oregeno.find(num1) == oregeno.end());
+		} while(original.find(num1) == original.end());
 		tempSet.insert(num1);
 	}
 	return tempSet;
@@ -246,72 +234,71 @@ std::set<State> Automaton::unmerge(State state, State largest, std::set<State> o
 void Automaton::recDet(Automaton fa, std::set<State> &visited,
 							std::map<State, std::map<BitVector, std::set<State> > >& newTrans,
 							State newState, std::queue<State> &Q) {
-		State merged;
-		BitVector bv; int temp;
-		std::set<State> newStates; //set voor de nieuwe transitie
-		std::set<State> originalStates;
-		std::map<BitVector, std::set<State>> tempMap;
-		if(visited.find(newState) == visited.end()) {
-			originalStates = unmerge(newState, *prev(fa.states.end()), fa.states);
-			visited.insert(newState); //states.insert(newState);
-			for(auto state : originalStates){ //bepaal alle originele states verwerkt in newState
-				if(fa.finalStates.find(state) != fa.finalStates.end())
-					finalStates.insert(newState);
-				for(auto trans : fa.transitions[state]) //itereer door transities
-						for(auto i : trans.second) //itereer door set states
-							tempMap[trans.first].insert(i);//voeg alle states toe aan set in tempMap
+	State merged;
+	BitVector bv; 
+	int temp;
+	std::set<State> originalStates, newStates; //set voor de nieuwe transitie
+	std::map<BitVector, std::set<State>> tempMap;
+	if(visited.find(newState) == visited.end()) {
+		originalStates = unmerge(newState, *prev(fa.states.end()), fa.states);
+		visited.insert(newState); //states.insert(newState);
+		for(auto state : originalStates){ //bepaal alle originele states verwerkt in newState
+			if(fa.finalStates.find(state) != fa.finalStates.end())
+				finalStates.insert(newState);
+			for(auto trans : fa.transitions[state]) //itereer door transities
+				for(auto i : trans.second) //itereer door set states
+					tempMap[trans.first].insert(i);//voeg alle states toe aan set in tempMap
+		}//tempMap bevat BV->alle states die bereikt kunnen worden uit de originalStates
+		for(int i = 0; i != pow(2, fa.alphabet.size()); ++i){
+			temp = i;
+			for(auto j : fa.alphabet){
+				bv[j] = temp&1;
+				temp >>= 1;
 			}
-			//tempMap bevat BV->alle states die bereikt kunnen worden uit de originalStates
-			for(int i = 0; i != pow(2, fa.alphabet.size()); ++i){
-				temp = i;
-				for(auto j : fa.alphabet){
-					bv[j] = temp&1;
-					temp >>= 1;
-				}
-				if(tempMap.find(bv) == tempMap.end()) {
-					if(visited.find(-1) == visited.end()) visited.insert(-1);
-					tempMap[bv].insert(-1);
-				}
-				else {
+			if(tempMap.find(bv) == tempMap.end()) {
+				if(visited.find(-1) == visited.end()) visited.insert(-1);
+				tempMap[bv].insert(-1);
+			}
+			else {
 				merged = merge(tempMap[bv], *prev(fa.states.end()));
-				Q.push(merged);
-				tempMap[bv].clear(); tempMap[bv].insert(merged); //transitie met alleen merged = deterministic
-				}
-			}
-			newTrans.insert(std::pair<State, std::map<BitVector, std::set<State>>>(newState, tempMap));
-			while(!Q.empty()){//states die bereikt kunnen worden vanaf deze ook verwerken
-				newState = Q.front(); Q.pop();
-				recDet(fa, visited, newTrans, newState, Q);
-			}
+				Q.push(merged); 
+				tempMap[bv].clear(); tempMap[bv].insert(merged); 
+				} //transitie met alleen merged = deterministic
 		}
+		newTrans.insert(std::pair<State, std::map<BitVector, std::set<State>>>(newState, tempMap));
+		while(!Q.empty()){//states die bereikt kunnen worden vanaf deze ook verwerken
+			newState = Q.front(); Q.pop();
+			recDet(fa, visited, newTrans, newState, Q);
+		}
+	}
 }
 
-void Automaton::quant(unsigned var){
-    BitVector bv;
-    std::set<State> tempset;
-    std::map<BitVector, std::set<State>> tempmap;
-    std::map<State, std::map<BitVector, std::set<State>>> newTransitions;
-    for (auto i : transitions){
-        for(auto j : i.second){
-            bv = j.first;
-            bv.erase(var);
-            if(bv.empty()) tempset.insert(transitions[i.first][j.first].begin(),
-                                                                        transitions[i.first][j.first].end());
-            else tempmap.insert(std::pair<BitVector, std::set<State>>
-                (bv, transitions[i.first][j.first]));
-        }
-        if(!tempset.empty()) tempmap.insert(std::pair<BitVector, std::set<State>>
-                                                    (bv, tempset));
-        newTransitions.insert(std::pair<State,
-            std::map<BitVector, std::set<State>>>(i.first, tempmap));
-        tempmap.clear(); ;
+void Automaton::project(const unsigned variable){
+  BitVector bv;
+  std::set<State> tempSet;
+  std::map<BitVector, std::set<State>> tempMap;
+  std::map<State, std::map<BitVector, std::set<State>>> newTransitions;
+  for (auto i : transitions){
+    for(auto j : i.second){
+      bv = j.first;
+      bv.erase(variable);
+      if(bv.empty()) 
+      	tempSet.insert(transitions[i.first][j.first].begin(),
+       		transitions[i.first][j.first].end());
+      else tempMap.insert(std::pair<BitVector, std::set<State>>
+       (bv, transitions[i.first][j.first]));
     }
-    alphabet.erase(var);
-    transitions = newTransitions;
+    if(!tempSet.empty()) 
+     	tempMap.insert(std::pair<BitVector, std::set<State>>(bv, tempSet));
+      newTransitions.insert(std::pair<State,
+        std::map<BitVector, std::set<State>>>(i.first, tempMap));
+      tempMap.clear();
+  }
+  alphabet.erase(variable);
+  transitions = newTransitions;
 }
 
-
-bool Automaton::stateInstates(State state){
+bool Automaton::contains(State state) const{
 	if(states.find(state) == states.end()) return false;
 	return true;
 }
@@ -328,22 +315,53 @@ void Automaton::insertFreeVars(Automaton fa2){
 Automaton* Automaton::nulBit(){
 	BitVector temp;
 	std::set<State> visited;
-	bool loop = false;
 	for(auto i : alphabet)
 		temp.insert(std::pair<unsigned, bool>(i, 0));
-	while(!inFinalState() & !loop){
+	while(!inFinalState()){
 		visited.insert(currentStates.begin(), currentStates.end());
 		next(temp);
-		loop = true;
 		for(auto i : currentStates)
-			if(visited.find(i) == visited.end()) loop = false; //kan vm met 'break;' geen bools nodig
+			if(visited.find(i) == visited.end()) break;
 	}
 	return this;
 }
 
-void Automaton::comp(){
+void Automaton::complement(Automaton& fa){
 	std::set<State> newFinal;
-	for(auto i : states)
-		if(finalStates.find(i) == finalStates.end()) newFinal.insert(i);
+	for(auto i : fa.states)
+		if(fa.finalStates.find(i) == fa.finalStates.end()) newFinal.insert(i);
 	finalStates = newFinal;
+	states = fa.states;
+	transitions = fa.transitions;
+	initialStates = fa.initialStates;
+	currentStates = fa.currentStates;
+}
+
+void Automaton::restate(){
+	int count = 0;
+	std::set<State> newStates, newFin, newInit, newCur;
+	std::map<State, State> fromTo;
+	std::map<BitVector, std::set<State>> tempMap;
+	std::map<State, std::map<BitVector, std::set<State>>> newTrans;
+	for(auto i : states) {
+		newStates.insert(count);
+		if(finalStates.find(i) != finalStates.end()) newFin.insert(count);
+		if(initialStates.find(i) != initialStates.end()) newInit.insert(count);
+		if(currentStates.find(i) != currentStates.end()) newCur.insert(count);
+		fromTo.insert(std::pair<State, State>(i, count));
+		count++;
+	}
+	states = newStates;
+	finalStates = newFin;
+	initialStates = newInit;
+	currentStates = newCur;
+	for(auto j : transitions){
+		for(auto k : j.second)
+			for(auto l : k.second)
+				tempMap[k.first].insert(fromTo[l]); 
+		newTrans.insert(std::pair<State, std::map<BitVector, std::set<State>>>
+			(fromTo[j.first], tempMap));
+		tempMap.clear();
+	}
+	transitions = newTrans;
 }
