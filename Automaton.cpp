@@ -102,13 +102,12 @@ void Automaton::addToAlphabet(unsigned varnr){
 	}
 }
 
-void Automaton::next(const BitVector input){
+void Automaton::next(const BitVector in){
 	std::set<State> temp = currentStates;
 	currentStates.clear();
 	for(auto i : temp)
-		if(transitions[i].find(input) != transitions[i].end())
-			currentStates.insert(
-			transitions[i][input].begin(), transitions[i][input].end());
+		if(transitions[i].find(in) != transitions[i].end())
+			currentStates.insert(transitions[i][in].begin(),transitions[i][in].end());
 }
 
 void Automaton::printStates(std::ostream &str, const std::set<State> s) {
@@ -221,7 +220,7 @@ std::set<State> Automaton::unmerge(State state, std::set<State> original) const 
 	int num1, num2;
 	if(original.find(state) != original.end()) tempSet.insert(state);//state wasn't merged
 	else {
-		num1 = state - *prev(fa.states.end());
+		num1 = state - *prev(original.end());
 		do {
 			invCan(num1, num1, num2);//unmerge states until all original states were found
 			tempSet.insert(num2);
@@ -296,6 +295,7 @@ void Automaton::project(const unsigned variable){
   }
   alphabet.erase(variable);
   transitions = newTransitions;
+  eliminateLambda(*this);
 }
 
 bool Automaton::contains(State state) const{
@@ -310,20 +310,6 @@ void Automaton::addVar(unsigned x){
 void Automaton::insertFreeVars(Automaton fa2){
 	for(auto i : fa2.alphabet)
 		if(alphabet.find(i) == alphabet.end()) addToAlphabet(i);
-}
-
-Automaton* Automaton::nulBit(){
-	BitVector temp;
-	std::set<State> visited;
-	for(auto i : alphabet) //zero vector is created
-		temp.insert(std::pair<unsigned, bool>(i, 0));
-	while(!inFinalState()){ //every state reachable from current state with the
-		visited.insert(currentStates.begin(), currentStates.end()); //0 vector
-		next(temp); //is visited so that accepted states can be found
-		for(auto i : currentStates)
-			if(visited.find(i) == visited.end()) break; //loop is present
-	}
-	return this; //current automaton is returned
 }
 
 void Automaton::complement(Automaton& fa){

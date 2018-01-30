@@ -208,7 +208,7 @@ bool verifyAutomaton(Automaton& theAuto, string formula, bool debug, std::ostrea
         if(debug) {
             printBitVectors(out,l);
         }
-	return theAuto.inFinalState() || theAuto.nulBit();
+	return theAuto.inFinalState();
 }
 
 

@@ -1,14 +1,11 @@
-README
+READ ME
 
 Compiled with g++ version 5.4.0-6ubuntu1~16.04.5.
 
 Tested with valgrind, memory leaks were found in the part of the program that was given to us.
 
-Completed part I and part II including the optional part.
-
-Edited main.cpp, automaton.cpp and automaton.h.
-
-note: MakeDeterministic is used only in the complement function.
+We have finished part I and have started with part II (not finished yet).
+Every function that belongs to part II has "//part II" written above it. 
 
 Max Blankestijn s1819658
 Loes Dekker s1850024

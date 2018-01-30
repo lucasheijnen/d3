@@ -116,17 +116,6 @@ class Automaton {
 		void insertFreeVars(Automaton fa2);
 
 		/**
-			* nulBit
-			* Abstract: Returns if finalState can be reached by adding 0's to the end
-				of the inputso far. since any binary number followed by any number of zero's
-				is equivalent to the number
-			* pre: An automaton where all desired input is already processed
-			* post: True if a final state can be reached using only 0's else false
-			* return: Boolean
-		**/
-		 nulBit();
-
-		/**
 			* restate
 			* Abstract: converts the current automaton to an equivalent one with
 				states 0,1..n
@@ -194,7 +183,7 @@ class Automaton {
 			* post: a 'merged' state that can be converted back into the original set
 			* return: 'merged' state
 		**/
-		State merge(std::set<State> mStates) const;
+		State merge(std::set<State> mStates, State largest) const;
 
 		/**
 			* unmerge
